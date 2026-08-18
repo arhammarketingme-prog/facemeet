@@ -46,18 +46,34 @@ No build step — push this folder to a GitHub repo and connect it to
 Cloudflare Pages as a static site (build command: none, output directory:
 `/`). Done.
 
-## What Phase 1 does and doesn't do
+## Phase 2 (now included)
 
-Works end to end: signup, login, logout, session persistence, profile view,
-profile edit (channel name + bio), referral code generation.
+Run `supabase/schema_phase2.sql` **after** `schema.sql`, in the same SQL
+editor. It adds:
 
-Not yet built (later phases per the roadmap): posts/feed, follow, likes/
-comments, communities, polls, notifications, demo/seed accounts, YouTube
-discovery, Earn Center, advertising, E2E encrypted messaging, admin
-dashboard, moderation, multilingual UI.
+- `posts`, `follows`, `likes`, `comments` tables
+- triggers that keep `likes_count`/`comments_count` on posts and
+  `channel_followers_count`/`channel_posts_count` on profiles in sync
+  automatically — the frontend never hand-updates these counters
+- RLS policies: posts/follows/likes/comments are publicly readable; a user
+  can only create/delete rows where they are the actor (author, follower, or
+  liker)
+
+The frontend (`index.html`) now has a logged-in app shell with three tabs:
+
+- **Home** — composer + feed of all active posts, with like/unlike,
+  expandable comments, and a follow/unfollow button on other people's posts
+- **Search** — debounced search across people (username/display name) and
+  post content
+- **Profile** — unchanged from Phase 1 (channel name, bio, referral code)
+
+## What's not yet built
+
+Communities, polls, notifications, demo/seed accounts, YouTube discovery,
+Earn Center, advertising, E2E encrypted messaging, admin dashboard,
+moderation, multilingual UI — these are later phases per the roadmap.
 
 ## Next phase
 
-Phase 2 per the roadmap: posts, feed, likes, comments, follow, search. That
-needs a few more tables (`posts`, `follows`, `likes`, `comments`) and RLS
-policies for each — say the word and it's the next migration.
+Phase 3 per the roadmap: communities, polls, notifications, creator
+channels (channel pages beyond the current "my channel" settings card).

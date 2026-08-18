@@ -178,6 +178,47 @@
     font-family:inherit;font-size:0.9rem;resize:vertical;min-height:70px;
   }
   .hidden{display:none !important;}
+  .subnav{
+    display:flex;gap:4px;max-width:640px;margin:0 auto;padding:16px 24px 0;
+  }
+  .tabbtn{
+    background:none;border:none;color:var(--paper-dim);
+    padding:10px 16px;font-size:0.9rem;font-weight:600;cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tabbtn.active{color:var(--paper);border-bottom-color:var(--marigold);}
+  .tabpanel{padding-top:24px;}
+  .post{
+    background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;margin-bottom:14px;
+  }
+  .post-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .post-avatar{
+    width:36px;height:36px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--marigold),var(--teal));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ink);font-size:0.9rem;
+  }
+  .post-author{font-weight:600;font-size:0.92rem;}
+  .post-meta{font-size:0.78rem;color:var(--paper-dim);}
+  .post-content{font-size:0.95rem;white-space:pre-wrap;margin-bottom:12px;}
+  .post-actions{display:flex;gap:16px;align-items:center;}
+  .post-actions button{
+    background:none;border:none;color:var(--paper-dim);cursor:pointer;
+    font-size:0.85rem;display:flex;align-items:center;gap:6px;
+  }
+  .post-actions button.liked{color:var(--marigold);}
+  .follow-btn{margin-left:auto;font-size:0.78rem;padding:5px 12px;}
+  .comments-box{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
+  .comment{font-size:0.85rem;margin-bottom:8px;}
+  .comment b{color:var(--teal);}
+  .comment-input-row{display:flex;gap:8px;margin-top:8px;}
+  .comment-input-row input{
+    flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--ink);color:var(--paper);font-size:0.85rem;
+  }
+  .search-result{
+    display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);
+  }
   .skeleton{
     height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
     background-size:400% 100%;
@@ -261,9 +302,47 @@
   </div>
 </main>
 
-<!-- ============ PROFILE ============ -->
-<main id="view-profile" class="hidden">
-  <div class="profilewrap">
+<!-- ============ APP (logged-in shell) ============ -->
+<main id="view-app" class="hidden">
+  <div class="subnav">
+    <button class="tabbtn active" id="tab-btn-home" data-tab="home">Home</button>
+    <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
+    <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
+  </div>
+
+  <!-- ---- HOME / FEED TAB ---- -->
+  <div id="tab-home" class="tabpanel profilewrap">
+    <div class="card" style="margin-bottom:20px">
+      <textarea id="composer-text" placeholder="What's on your mind?" maxlength="2000"></textarea>
+      <div id="composer-msg-slot"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-solid" id="btn-post">Post</button>
+      </div>
+    </div>
+
+    <div id="feed-loading">
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="width:90%"></div>
+      <div class="skeleton" style="width:40%"></div>
+    </div>
+    <div id="feed-error" class="hidden">
+      <p class="msg msg-error">Couldn't load the feed. <button class="btn" id="feed-retry">Retry</button></p>
+    </div>
+    <div id="feed-empty" class="hidden">
+      <p class="msg msg-ok">No posts yet — be the first to share something.</p>
+    </div>
+    <div id="feed-list"></div>
+  </div>
+
+  <!-- ---- SEARCH TAB ---- -->
+  <div id="tab-search" class="tabpanel profilewrap hidden">
+    <div class="field"><input id="search-input" type="text" placeholder="Search people or posts…"></div>
+    <div id="search-empty"><p style="color:var(--paper-dim)">Search for creators or posts.</p></div>
+    <div id="search-results"></div>
+  </div>
+
+  <!-- ---- PROFILE TAB ---- -->
+  <div id="tab-profile" class="tabpanel profilewrap hidden">
     <div id="profile-loading">
       <div class="skeleton" style="width:64px;height:64px;border-radius:50%"></div>
       <div class="skeleton" style="width:40%"></div>
@@ -303,7 +382,7 @@
   </div>
 </main>
 
-<footer>Nexus — Phase 1 build. Demo mode, Earn Center, YouTube discovery and more arrive in later phases.</footer>
+<footer>Nexus — Phase 2 build. Demo mode, Earn Center, YouTube discovery and more arrive in later phases.</footer>
 
 <script>
 /* ------------------------------------------------------------
@@ -321,10 +400,37 @@ const $ = (id) => document.getElementById(id);
 const show = (el) => el.classList.remove('hidden');
 const hide = (el) => el.classList.add('hidden');
 
-function views(){ return { landing: $('view-landing'), auth: $('view-auth'), profile: $('view-profile') }; }
+function views(){ return { landing: $('view-landing'), auth: $('view-auth'), app: $('view-app') }; }
 function showView(name){
   const v = views();
   Object.keys(v).forEach(k => v[k].classList.toggle('hidden', k !== name));
+}
+
+/* ---- app shell: tabs ---- */
+let currentUser = null;
+
+function showTab(tab){
+  ['home','search','profile'].forEach(t => {
+    $('tab-' + t).classList.toggle('hidden', t !== tab);
+    $('tab-btn-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'home') loadFeed();
+  if (tab === 'profile') loadProfile();
+}
+document.querySelectorAll('.tabbtn').forEach(b => {
+  b.addEventListener('click', () => showTab(b.dataset.tab));
+});
+
+function initials(name){ return (name || '?').trim().charAt(0).toUpperCase(); }
+function timeAgo(iso){
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime())/1000));
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm';
+  if (s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
+}
+function escapeHtml(str){
+  const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
 }
 
 function flash(slotId, text, kind){
@@ -404,12 +510,24 @@ $('btn-login').addEventListener('click', async () => {
 /* ---- logout ---- */
 $('btn-logout').addEventListener('click', async () => {
   await sb.auth.signOut();
+  currentUser = null;
   showView('landing');
 });
 
-/* ---- profile load/save ---- */
+/* ---- entry point after login/signup: show app shell on Home tab ---- */
 async function loadProfile(){
-  showView('profile');
+  const { data: { user } } = await sb.auth.getUser();
+  currentUser = user || null;
+  showView('app');
+  showTabChrome();
+  await loadProfileTabOnly();
+}
+function showTabChrome(){
+  showTab('home');
+}
+
+/* ---- profile load/save (Profile tab) ---- */
+async function loadProfileTabOnly(){
   show($('profile-loading')); hide($('profile-error')); hide($('profile-body'));
 
   const { data: { user }, error: userErr } = await sb.auth.getUser();
@@ -432,7 +550,7 @@ async function loadProfile(){
   $('p-referral').value = profile.referral_code || '';
 }
 
-$('profile-retry').addEventListener('click', loadProfile);
+$('profile-retry').addEventListener('click', loadProfileTabOnly);
 
 $('btn-save').addEventListener('click', async () => {
   const { data: { user } } = await sb.auth.getUser();
@@ -451,6 +569,209 @@ $('btn-save').addEventListener('click', async () => {
   if (error){ flash('save-msg-slot', 'Could not save — ' + error.message, 'error'); }
   else { flash('save-msg-slot', 'Saved.', 'ok'); }
 });
+
+/* ============ FEED ============ */
+async function loadFeed(){
+  show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
+
+  const { data: posts, error } = await sb
+    .from('posts')
+    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  hide($('feed-loading'));
+  if (error){ show($('feed-error')); return; }
+  if (!posts || posts.length === 0){ show($('feed-empty')); return; }
+
+  // which of these posts has the current user liked?
+  let likedSet = new Set();
+  if (currentUser){
+    const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
+    likedSet = new Set((myLikes || []).map(l => l.post_id));
+  }
+  // which authors does the current user already follow?
+  let followingSet = new Set();
+  if (currentUser){
+    const authorIds = [...new Set(posts.map(p => p.author_id))];
+    const { data: myFollows } = await sb.from('follows').select('following_id').eq('follower_id', currentUser.id).in('following_id', authorIds);
+    followingSet = new Set((myFollows || []).map(f => f.following_id));
+  }
+
+  $('feed-list').innerHTML = posts.map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join('');
+  posts.forEach(p => wirePostCard(p.id));
+}
+
+function renderPost(p, liked, following){
+  const author = p.profiles || {};
+  const name = author.display_name || author.username || 'Unknown';
+  const isSelf = currentUser && p.author_id === currentUser.id;
+  return `
+    <div class="post" data-post-id="${p.id}">
+      <div class="post-head">
+        <div class="post-avatar">${initials(name)}</div>
+        <div>
+          <div class="post-author">${escapeHtml(name)}</div>
+          <div class="post-meta">@${escapeHtml(author.username || '')} · ${timeAgo(p.created_at)}</div>
+        </div>
+        ${(!isSelf && currentUser) ? `<button class="btn follow-btn ${following ? 'is-following' : ''}" data-follow-target="${p.author_id}">${following ? 'Following' : 'Follow'}</button>` : ''}
+      </div>
+      <div class="post-content">${escapeHtml(p.content)}</div>
+      <div class="post-actions">
+        <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}">♥ <span class="like-count">${p.likes_count}</span></button>
+        <button class="comment-toggle">💬 <span class="comment-count">${p.comments_count}</span></button>
+      </div>
+      <div class="comments-box hidden">
+        <div class="comments-list"><div class="skeleton" style="width:60%"></div></div>
+        ${currentUser ? `<div class="comment-input-row"><input type="text" placeholder="Write a comment…" class="comment-input"><button class="btn comment-send">Send</button></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function wirePostCard(postId){
+  const card = document.querySelector(`.post[data-post-id="${postId}"]`);
+  if (!card) return;
+
+  const likeBtn = card.querySelector('.like-btn');
+  likeBtn.addEventListener('click', async () => {
+    if (!currentUser){ showTab('profile'); return; }
+    const liked = likeBtn.dataset.liked === 'true';
+    likeBtn.disabled = true;
+    if (liked){
+      await sb.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+      likeBtn.dataset.liked = 'false'; likeBtn.classList.remove('liked');
+      likeBtn.querySelector('.like-count').textContent = Math.max(0, parseInt(likeBtn.querySelector('.like-count').textContent) - 1);
+    } else {
+      await sb.from('likes').insert({ post_id: postId, user_id: currentUser.id });
+      likeBtn.dataset.liked = 'true'; likeBtn.classList.add('liked');
+      likeBtn.querySelector('.like-count').textContent = parseInt(likeBtn.querySelector('.like-count').textContent) + 1;
+    }
+    likeBtn.disabled = false;
+  });
+
+  const followBtn = card.querySelector('.follow-btn');
+  if (followBtn){
+    followBtn.addEventListener('click', async () => {
+      const targetId = followBtn.dataset.followTarget;
+      const following = followBtn.classList.contains('is-following');
+      followBtn.disabled = true;
+      if (following){
+        await sb.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetId);
+        followBtn.classList.remove('is-following'); followBtn.textContent = 'Follow';
+      } else {
+        await sb.from('follows').insert({ follower_id: currentUser.id, following_id: targetId });
+        followBtn.classList.add('is-following'); followBtn.textContent = 'Following';
+      }
+      followBtn.disabled = false;
+    });
+  }
+
+  const commentToggle = card.querySelector('.comment-toggle');
+  const commentsBox = card.querySelector('.comments-box');
+  let commentsLoaded = false;
+  commentToggle.addEventListener('click', async () => {
+    commentsBox.classList.toggle('hidden');
+    if (!commentsBox.classList.contains('hidden') && !commentsLoaded){
+      commentsLoaded = true;
+      await loadComments(postId, card);
+    }
+  });
+
+  const sendBtn = card.querySelector('.comment-send');
+  if (sendBtn){
+    sendBtn.addEventListener('click', async () => {
+      const input = card.querySelector('.comment-input');
+      const content = input.value.trim();
+      if (!content) return;
+      sendBtn.disabled = true;
+      const { error } = await sb.from('comments').insert({ post_id: postId, author_id: currentUser.id, content });
+      sendBtn.disabled = false;
+      if (!error){
+        input.value = '';
+        const countEl = card.querySelector('.comment-count');
+        countEl.textContent = parseInt(countEl.textContent) + 1;
+        await loadComments(postId, card);
+      }
+    });
+  }
+}
+
+async function loadComments(postId, card){
+  const list = card.querySelector('.comments-list');
+  list.innerHTML = `<div class="skeleton" style="width:60%"></div>`;
+  const { data: comments, error } = await sb
+    .from('comments')
+    .select('content, created_at, profiles!comments_author_id_fkey(username, display_name)')
+    .eq('post_id', postId)
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: true })
+    .limit(50);
+
+  if (error){ list.innerHTML = `<p class="msg msg-error">Couldn't load comments.</p>`; return; }
+  if (!comments || comments.length === 0){ list.innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No comments yet.</p>`; return; }
+
+  list.innerHTML = comments.map(c => {
+    const a = c.profiles || {};
+    return `<div class="comment"><b>${escapeHtml(a.display_name || a.username || '?')}</b> ${escapeHtml(c.content)}</div>`;
+  }).join('');
+}
+
+$('feed-retry').addEventListener('click', loadFeed);
+
+$('btn-post').addEventListener('click', async () => {
+  if (!currentUser){ showTab('profile'); return; }
+  const text = $('composer-text').value.trim();
+  clearFlash('composer-msg-slot');
+  if (!text){ flash('composer-msg-slot', 'Write something before posting.', 'error'); return; }
+
+  const btn = $('btn-post'); btn.disabled = true; btn.textContent = 'Posting…';
+  const { error } = await sb.from('posts').insert({ author_id: currentUser.id, content: text });
+  btn.disabled = false; btn.textContent = 'Post';
+
+  if (error){ flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
+  $('composer-text').value = '';
+  await loadFeed();
+});
+
+/* ============ SEARCH ============ */
+let searchDebounce = null;
+$('search-input').addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runSearch, 350);
+});
+
+async function runSearch(){
+  const q = $('search-input').value.trim();
+  if (!q){ show($('search-empty')); $('search-results').innerHTML = ''; return; }
+  hide($('search-empty'));
+  $('search-results').innerHTML = `<div class="skeleton" style="width:50%"></div>`;
+
+  const [{ data: people, error: peopleErr }, { data: posts, error: postsErr }] = await Promise.all([
+    sb.from('profiles').select('id, username, display_name, bio').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(10),
+    sb.from('posts').select('id, content, created_at, profiles!posts_author_id_fkey(username, display_name)').eq('status', 'ACTIVE').ilike('content', `%${q}%`).order('created_at', { ascending: false }).limit(10)
+  ]);
+
+  if (peopleErr && postsErr){ $('search-results').innerHTML = `<p class="msg msg-error">Search failed. Try again.</p>`; return; }
+
+  let html = '';
+  if (people && people.length){
+    html += `<h3>People</h3>` + people.map(u => `
+      <div class="search-result">
+        <div class="post-avatar">${initials(u.display_name || u.username)}</div>
+        <div><div class="post-author">${escapeHtml(u.display_name || u.username)}</div><div class="post-meta">@${escapeHtml(u.username)}</div></div>
+      </div>`).join('');
+  }
+  if (posts && posts.length){
+    html += `<h3 style="margin-top:20px">Posts</h3>` + posts.map(p => {
+      const a = p.profiles || {};
+      return `<div class="post"><div class="post-meta">${escapeHtml(a.display_name || a.username || '')} · ${timeAgo(p.created_at)}</div><div class="post-content">${escapeHtml(p.content)}</div></div>`;
+    }).join('');
+  }
+  if (!html) html = `<p style="color:var(--paper-dim)">No results for "${escapeHtml(q)}".</p>`;
+  $('search-results').innerHTML = html;
+}
 
 /* ---- boot: restore session if present ---- */
 (async () => {
