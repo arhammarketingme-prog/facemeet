@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Create. Connect. Grow. Earn.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0B1120;
+    --ink-soft:#141b30;
+    --paper:#F5F3EE;
+    --paper-dim:#c9c7bf;
+    --marigold:#F5A623;
+    --marigold-deep:#c9820f;
+    --teal:#2DD4BF;
+    --line:rgba(245,243,238,0.12);
+    --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  h1,h2,h3,.brand{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.01em;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ---- top bar ---- */
+  header{
+    position:sticky;top:0;z-index:40;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;
+    background:rgba(11,17,32,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{font-size:1.25rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--marigold);display:inline-block;}
+  .navlinks{display:flex;gap:10px;align-items:center;}
+  .btn{
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--paper);
+    padding:9px 18px;
+    border-radius:999px;
+    font-size:0.9rem;
+    font-weight:500;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--marigold);}
+  .btn-solid{
+    background:var(--marigold);
+    color:var(--ink);
+    border-color:var(--marigold);
+    font-weight:600;
+  }
+  .btn-solid:hover{background:var(--marigold-deep);border-color:var(--marigold-deep);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  /* ---- hero ---- */
+  .hero{
+    max-width:960px;margin:0 auto;
+    padding:96px 24px 64px;
+    text-align:center;
+  }
+  .eyebrow{
+    display:inline-block;
+    font-size:0.78rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--teal);
+    border:1px solid rgba(45,212,191,0.35);
+    padding:5px 14px;
+    border-radius:999px;
+    margin-bottom:28px;
+  }
+  .hero h1{
+    font-size:clamp(2.2rem,6vw,3.6rem);
+    font-weight:700;
+    margin:0 0 20px;
+  }
+  .hero p{
+    color:var(--paper-dim);
+    font-size:1.05rem;
+    max-width:560px;
+    margin:0 auto 36px;
+  }
+  .hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  /* ---- journey bar: Discover -> Create -> Connect -> Grow -> Earn ---- */
+  .journey{
+    display:flex;
+    max-width:760px;
+    margin:64px auto 0;
+    border-radius:var(--radius);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .journey-step{
+    flex:1;
+    padding:18px 8px;
+    text-align:center;
+    font-size:0.82rem;
+    font-weight:600;
+    color:var(--paper-dim);
+    border-right:1px solid var(--line);
+    position:relative;
+  }
+  .journey-step:last-child{border-right:none;}
+  .journey-step .n{
+    display:block;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.72rem;
+    color:var(--marigold);
+    margin-bottom:4px;
+    letter-spacing:0.08em;
+  }
+
+  /* ---- sections ---- */
+  section.panel{
+    max-width:960px;
+    margin:0 auto;
+    padding:48px 24px;
+  }
+  .card{
+    background:var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:28px;
+  }
+
+  /* ---- auth forms ---- */
+  .authwrap{max-width:400px;margin:0 auto;padding:64px 24px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:0.82rem;color:var(--paper-dim);margin-bottom:6px;}
+  .field input{
+    width:100%;
+    padding:11px 14px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--ink);
+    color:var(--paper);
+    font-size:0.95rem;
+  }
+  .field input:focus{outline:2px solid var(--marigold);outline-offset:1px;}
+  .msg{font-size:0.85rem;padding:10px 14px;border-radius:10px;margin-bottom:16px;}
+  .msg-error{background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+  .msg-ok{background:rgba(45,212,191,0.12);color:var(--teal);border:1px solid rgba(45,212,191,0.3);}
+  .switcher{text-align:center;margin-top:18px;font-size:0.88rem;color:var(--paper-dim);}
+  .switcher button{background:none;border:none;color:var(--marigold);cursor:pointer;font-size:0.88rem;text-decoration:underline;}
+
+  /* ---- profile ---- */
+  .profilewrap{max-width:640px;margin:0 auto;padding:48px 24px;}
+  .profile-head{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+  .avatar{
+    width:64px;height:64px;border-radius:50%;
+    background:linear-gradient(135deg,var(--marigold),var(--teal));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:var(--ink);font-size:1.3rem;
+    flex-shrink:0;
+  }
+  .stats{display:flex;gap:24px;margin:20px 0;flex-wrap:wrap;}
+  .stat{text-align:left;}
+  .stat .val{font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:700;}
+  .stat .lbl{font-size:0.78rem;color:var(--paper-dim);}
+  textarea{
+    width:100%;padding:11px 14px;border-radius:10px;
+    border:1px solid var(--line);background:var(--ink);color:var(--paper);
+    font-family:inherit;font-size:0.9rem;resize:vertical;min-height:70px;
+  }
+  .hidden{display:none !important;}
+  .skeleton{
+    height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
+    background-size:400% 100%;
+    animation:shimmer 1.4s ease infinite;
+    margin-bottom:10px;
+  }
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+  footer{
+    text-align:center;padding:32px 24px;color:var(--paper-dim);font-size:0.8rem;
+    border-top:1px solid var(--line);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .skeleton{animation:none;}
+  }
+  @media (max-width:640px){
+    .journey{flex-wrap:wrap;}
+    .journey-step{flex:1 1 33%;border-bottom:1px solid var(--line);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="dot"></span>Nexus</div>
+  <div class="navlinks" id="navlinks">
+    <button class="btn" id="nav-login">Log in</button>
+    <button class="btn btn-solid" id="nav-signup">Join free</button>
+  </div>
+</header>
+
+<!-- ============ LANDING ============ -->
+<main id="view-landing">
+  <div class="hero">
+    <span class="eyebrow">Privacy-first · Built for creators</span>
+    <h1>Create. Connect.<br>Grow. Earn.</h1>
+    <p>A privacy-first social platform for creators and communities — with data minimization built in, not bolted on.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-solid" id="hero-join">Join free</button>
+      <button class="btn" id="hero-demo">Explore demo</button>
+    </div>
+    <div class="journey">
+      <div class="journey-step"><span class="n">01</span>Discover</div>
+      <div class="journey-step"><span class="n">02</span>Create</div>
+      <div class="journey-step"><span class="n">03</span>Connect</div>
+      <div class="journey-step"><span class="n">04</span>Grow</div>
+      <div class="journey-step"><span class="n">05</span>Earn</div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="card">
+      <h3 style="margin-top:0">This is Phase 1</h3>
+      <p style="color:var(--paper-dim)">Foundation only, for now: accounts, Supabase auth, and profiles with row-level security. The feed, communities, YouTube discovery, Earn Center and the rest of the roadmap ship in later phases on top of this base.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ============ AUTH ============ -->
+<main id="view-auth" class="hidden">
+  <div class="authwrap">
+    <div id="auth-msg-slot"></div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <h2 style="margin-top:0">Log in</h2>
+      <div class="field"><label for="li-email">Email</label><input id="li-email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="li-pass">Password</label><input id="li-pass" type="password" autocomplete="current-password"></div>
+      <button class="btn btn-solid" id="btn-login" style="width:100%">Log in</button>
+      <div class="switcher">New here? <button id="to-signup">Create an account</button></div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="form-signup" class="hidden">
+      <h2 style="margin-top:0">Join free</h2>
+      <div class="field"><label for="su-name">Display name</label><input id="su-name" type="text" autocomplete="name"></div>
+      <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="6"></div>
+      <button class="btn btn-solid" id="btn-signup" style="width:100%">Create account</button>
+      <div class="switcher">Already have an account? <button id="to-login">Log in</button></div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ PROFILE ============ -->
+<main id="view-profile" class="hidden">
+  <div class="profilewrap">
+    <div id="profile-loading">
+      <div class="skeleton" style="width:64px;height:64px;border-radius:50%"></div>
+      <div class="skeleton" style="width:40%"></div>
+      <div class="skeleton" style="width:70%"></div>
+    </div>
+    <div id="profile-error" class="hidden">
+      <p class="msg msg-error">Couldn't load your profile. <button class="btn" id="profile-retry">Retry</button></p>
+    </div>
+    <div id="profile-body" class="hidden">
+      <div class="profile-head">
+        <div class="avatar" id="p-initial">?</div>
+        <div>
+          <h2 style="margin:0" id="p-name">—</h2>
+          <div style="color:var(--paper-dim)" id="p-username">@—</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="val" id="p-followers">0</div><div class="lbl">Followers</div></div>
+        <div class="stat"><div class="val" id="p-posts">0</div><div class="lbl">Posts</div></div>
+        <div class="stat"><div class="val" id="p-views">0</div><div class="lbl">Channel views</div></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">My Channel</h3>
+        <div class="field"><label for="p-channel">Channel name</label><input id="p-channel" type="text"></div>
+        <div class="field"><label for="p-bio">Bio</label><textarea id="p-bio"></textarea></div>
+        <div class="field"><label for="p-referral">Your referral code</label><input id="p-referral" type="text" readonly></div>
+        <div id="save-msg-slot"></div>
+        <button class="btn btn-solid" id="btn-save">Save changes</button>
+      </div>
+
+      <p style="margin-top:24px;text-align:center">
+        <button class="btn" id="btn-logout">Log out</button>
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer>Nexus — Phase 1 build. Demo mode, Earn Center, YouTube discovery and more arrive in later phases.</footer>
+
+<script>
+/* ------------------------------------------------------------
+   SUPABASE SETUP
+   Replace with your project's values, or (recommended) inject
+   them at deploy time via Cloudflare Pages environment vars.
+   The anon key is safe to expose client-side; RLS does the
+   actual access control. NEVER put the service-role key here.
+------------------------------------------------------------ */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = (id) => document.getElementById(id);
+const show = (el) => el.classList.remove('hidden');
+const hide = (el) => el.classList.add('hidden');
+
+function views(){ return { landing: $('view-landing'), auth: $('view-auth'), profile: $('view-profile') }; }
+function showView(name){
+  const v = views();
+  Object.keys(v).forEach(k => v[k].classList.toggle('hidden', k !== name));
+}
+
+function flash(slotId, text, kind){
+  const slot = $(slotId);
+  slot.innerHTML = `<div class="msg ${kind === 'error' ? 'msg-error' : 'msg-ok'}">${text}</div>`;
+}
+function clearFlash(slotId){ $(slotId).innerHTML = ''; }
+
+/* ---- nav ---- */
+$('nav-login').addEventListener('click', () => { showAuth('login'); });
+$('nav-signup').addEventListener('click', () => { showAuth('signup'); });
+$('hero-join').addEventListener('click', () => { showAuth('signup'); });
+$('hero-demo').addEventListener('click', () => {
+  flash('auth-msg-slot', 'Demo mode ships in Phase 4 — for now, join free to create your account.', 'ok');
+  showAuth('signup');
+});
+
+function showAuth(which){
+  clearFlash('auth-msg-slot');
+  showView('auth');
+  $('form-login').classList.toggle('hidden', which !== 'login');
+  $('form-signup').classList.toggle('hidden', which !== 'signup');
+}
+$('to-signup').addEventListener('click', () => showAuth('signup'));
+$('to-login').addEventListener('click', () => showAuth('login'));
+
+/* ---- signup ---- */
+$('btn-signup').addEventListener('click', async () => {
+  const name = $('su-name').value.trim();
+  const email = $('su-email').value.trim();
+  const password = $('su-pass').value;
+  clearFlash('auth-msg-slot');
+
+  if (!email || !password || password.length < 6){
+    flash('auth-msg-slot', 'Please enter a valid email and a password of at least 6 characters.', 'error');
+    return;
+  }
+  const btn = $('btn-signup'); btn.disabled = true; btn.textContent = 'Creating account…';
+
+  const { data, error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { display_name: name || null } }
+  });
+
+  btn.disabled = false; btn.textContent = 'Create account';
+
+  if (error){ flash('auth-msg-slot', error.message, 'error'); return; }
+
+  if (data.session){
+    await loadProfile();
+  } else {
+    flash('auth-msg-slot', 'Account created. Check your email to confirm, then log in.', 'ok');
+    showAuth('login');
+  }
+});
+
+/* ---- login ---- */
+$('btn-login').addEventListener('click', async () => {
+  const email = $('li-email').value.trim();
+  const password = $('li-pass').value;
+  clearFlash('auth-msg-slot');
+
+  if (!email || !password){
+    flash('auth-msg-slot', 'Please enter your email and password.', 'error');
+    return;
+  }
+  const btn = $('btn-login'); btn.disabled = true; btn.textContent = 'Logging in…';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false; btn.textContent = 'Log in';
+
+  if (error){ flash('auth-msg-slot', error.message, 'error'); return; }
+  await loadProfile();
+});
+
+/* ---- logout ---- */
+$('btn-logout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  showView('landing');
+});
+
+/* ---- profile load/save ---- */
+async function loadProfile(){
+  showView('profile');
+  show($('profile-loading')); hide($('profile-error')); hide($('profile-body'));
+
+  const { data: { user }, error: userErr } = await sb.auth.getUser();
+  if (userErr || !user){ hide($('profile-loading')); show($('profile-error')); return; }
+
+  const { data: profile, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+
+  hide($('profile-loading'));
+  if (error || !profile){ show($('profile-error')); return; }
+
+  show($('profile-body'));
+  $('p-initial').textContent = (profile.display_name || profile.username || '?').charAt(0).toUpperCase();
+  $('p-name').textContent = profile.display_name || profile.username;
+  $('p-username').textContent = '@' + profile.username;
+  $('p-followers').textContent = profile.channel_followers_count;
+  $('p-posts').textContent = profile.channel_posts_count;
+  $('p-views').textContent = profile.channel_views_count;
+  $('p-channel').value = profile.channel_name || '';
+  $('p-bio').value = profile.bio || '';
+  $('p-referral').value = profile.referral_code || '';
+}
+
+$('profile-retry').addEventListener('click', loadProfile);
+
+$('btn-save').addEventListener('click', async () => {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const btn = $('btn-save'); btn.disabled = true; btn.textContent = 'Saving…';
+  clearFlash('save-msg-slot');
+
+  const { error } = await sb.from('profiles').update({
+    channel_name: $('p-channel').value.trim(),
+    bio: $('p-bio').value.trim()
+  }).eq('id', user.id);
+
+  btn.disabled = false; btn.textContent = 'Save changes';
+
+  if (error){ flash('save-msg-slot', 'Could not save — ' + error.message, 'error'); }
+  else { flash('save-msg-slot', 'Saved.', 'ok'); }
+});
+
+/* ---- boot: restore session if present ---- */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session){ await loadProfile(); }
+  else { showView('landing'); }
+})();
+</script>
+</body>
+</html>
