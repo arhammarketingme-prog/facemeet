@@ -245,6 +245,25 @@
   }
   .notif-item.unread{color:var(--paper);}
   .notif-item:not(.unread){color:var(--paper-dim);}
+  .demo-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px;
+  }
+  .demo-card{
+    background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;position:relative;
+  }
+  .demo-badge{
+    position:absolute;top:12px;right:12px;font-size:0.62rem;font-weight:700;letter-spacing:0.06em;
+    color:var(--ink);background:var(--marigold);padding:2px 8px;border-radius:999px;
+  }
+  .demo-card .dc-name{font-weight:600;margin-bottom:2px;}
+  .demo-card .dc-cat{font-size:0.78rem;color:var(--teal);margin-bottom:8px;}
+  .demo-card .dc-bio{font-size:0.82rem;color:var(--paper-dim);}
+  .demo-card .dc-stats{display:flex;gap:14px;margin-top:10px;font-size:0.76rem;color:var(--paper-dim);}
+  .demo-post{
+    background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 20px;margin-bottom:10px;position:relative;
+  }
   .skeleton{
     height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
     background-size:400% 100%;
@@ -294,10 +313,29 @@
     </div>
   </div>
 
+  <section class="panel" id="demo-section">
+    <h2 style="text-align:center">Explore the platform — DEMO</h2>
+    <p style="text-align:center;color:var(--paper-dim);max-width:520px;margin:0 auto 32px">
+      Everything below is <strong>AI-generated sample content</strong>, clearly labeled, so you can see Nexus alive before you join. None of these are real people or real earnings.
+    </p>
+
+    <h3>Sample creators</h3>
+    <div id="demo-creators-loading" class="skeleton" style="width:60%"></div>
+    <div id="demo-creators-grid" class="demo-grid"></div>
+
+    <h3 style="margin-top:32px">Sample feed</h3>
+    <div id="demo-posts-loading" class="skeleton" style="width:60%"></div>
+    <div id="demo-posts-list"></div>
+
+    <h3 style="margin-top:32px">Sample communities</h3>
+    <div id="demo-communities-loading" class="skeleton" style="width:60%"></div>
+    <div id="demo-communities-grid" class="demo-grid"></div>
+  </section>
+
   <section class="panel">
     <div class="card">
-      <h3 style="margin-top:0">This is Phase 1</h3>
-      <p style="color:var(--paper-dim)">Foundation only, for now: accounts, Supabase auth, and profiles with row-level security. The feed, communities, YouTube discovery, Earn Center and the rest of the roadmap ship in later phases on top of this base.</p>
+      <h3 style="margin-top:0">This is Phase 4</h3>
+      <p style="color:var(--paper-dim)">Foundation + feed/communities/polls/notifications + the demo seed ecosystem are live. YouTube discovery, the Earn Center, advertising, E2E messaging and moderation ship in later phases on top of this base.</p>
     </div>
   </section>
 </main>
@@ -536,8 +574,7 @@ $('nav-login').addEventListener('click', () => { showAuth('login'); });
 $('nav-signup').addEventListener('click', () => { showAuth('signup'); });
 $('hero-join').addEventListener('click', () => { showAuth('signup'); });
 $('hero-demo').addEventListener('click', () => {
-  flash('auth-msg-slot', 'Demo mode ships in Phase 4 — for now, join free to create your account.', 'ok');
-  showAuth('signup');
+  $('demo-section').scrollIntoView({ behavior: 'smooth' });
 });
 
 function showAuth(which){
@@ -1128,8 +1165,79 @@ async function loadNotifications(){
 }
 $('notif-retry').addEventListener('click', loadNotifications);
 
+/* ============ DEMO PREVIEW (landing page, public, no auth) ============ */
+function demoAvatarStyle(hue){
+  return `background:hsl(${hue},70%,50%);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;font-weight:700;color:#0B1120;flex-shrink:0`;
+}
+
+async function loadDemoPreview(){
+  // creators
+  const { data: creators, error: cErr } = await sb.from('demo_accounts').select('*').order('followers_count', { ascending: false }).limit(9);
+  $('demo-creators-loading').classList.add('hidden');
+  if (!cErr && creators && creators.length){
+    $('demo-creators-grid').innerHTML = creators.map(c => `
+      <div class="demo-card">
+        <span class="demo-badge">DEMO</span>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+          <div style="${demoAvatarStyle(c.avatar_hue)}">${initials(c.display_name)}</div>
+          <div>
+            <div class="dc-name">${escapeHtml(c.display_name)}</div>
+            <div class="dc-cat">${escapeHtml(c.category)}</div>
+          </div>
+        </div>
+        <div class="dc-bio">${escapeHtml(c.bio)}</div>
+        <div class="dc-stats"><span>${c.followers_count.toLocaleString()} followers</span><span>${c.posts_count} posts</span></div>
+      </div>
+    `).join('');
+  } else {
+    $('demo-creators-grid').innerHTML = `<p style="color:var(--paper-dim)">Demo creators aren't loaded yet — run the Phase 4 seed script.</p>`;
+  }
+
+  // posts
+  const { data: posts, error: pErr } = await sb
+    .from('demo_posts')
+    .select('id, content, likes_count, comments_count, created_at, demo_accounts(display_name, category, avatar_hue)')
+    .order('created_at', { ascending: false })
+    .limit(8);
+  $('demo-posts-loading').classList.add('hidden');
+  if (!pErr && posts && posts.length){
+    $('demo-posts-list').innerHTML = posts.map(p => {
+      const a = p.demo_accounts || {};
+      return `<div class="demo-post">
+        <span class="demo-badge">AI DEMO</span>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+          <div style="${demoAvatarStyle(a.avatar_hue || 30)}">${initials(a.display_name || '?')}</div>
+          <div><div class="dc-name">${escapeHtml(a.display_name || 'Demo creator')}</div><div class="post-meta">${escapeHtml(a.category || '')} · ${timeAgo(p.created_at)}</div></div>
+        </div>
+        <div class="post-content">${escapeHtml(p.content)}</div>
+        <div class="post-meta">♥ ${p.likes_count} · 💬 ${p.comments_count} · <em>illustrative — not real engagement</em></div>
+      </div>`;
+    }).join('');
+  } else {
+    $('demo-posts-list').innerHTML = '';
+  }
+
+  // communities
+  const { data: comms, error: gErr } = await sb.from('demo_communities').select('*').order('members_count', { ascending: false }).limit(8);
+  $('demo-communities-loading').classList.add('hidden');
+  if (!gErr && comms && comms.length){
+    $('demo-communities-grid').innerHTML = comms.map(g => `
+      <div class="demo-card">
+        <span class="demo-badge">DEMO</span>
+        <div class="dc-name">${escapeHtml(g.name)}</div>
+        <div class="dc-cat">${escapeHtml(g.category)}</div>
+        <div class="dc-bio">${escapeHtml(g.description)}</div>
+        <div class="dc-stats"><span>${g.members_count.toLocaleString()} members</span></div>
+      </div>
+    `).join('');
+  } else {
+    $('demo-communities-grid').innerHTML = '';
+  }
+}
+
 /* ---- boot: restore session if present ---- */
 (async () => {
+  loadDemoPreview();
   const { data: { session } } = await sb.auth.getSession();
   if (session){ await loadProfile(); }
   else { showView('landing'); }

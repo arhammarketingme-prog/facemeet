@@ -91,14 +91,41 @@ New in the frontend:
 - Polls appear inline in the Home feed (and inside a community's feed);
   tapping an option votes once and reveals live percentages
 
+## Phase 4 (now included)
+
+Run `supabase/schema_phase4.sql` **after** phases 1–3. It's a single file
+that both creates the demo tables and seeds them — safe to re-run (it
+clears prior demo rows first). It creates:
+
+- `demo_accounts`, `demo_posts`, `demo_comments`, `demo_communities` — kept
+  completely separate from the real `profiles`/`posts`/`communities`
+  tables, per spec §38–41. Demo rows are never linked to `auth.users`, so
+  they can never log in or be mistaken for real accounts.
+- RLS: public read-only on all four tables. No insert/update/delete policy
+  exists for any client role, so only the seed script itself (running with
+  owner privileges in the SQL editor) can write to them.
+- ~1,000 demo personas across the spec's category list (Technology, AI,
+  Business, Maharashtra, Agriculture, Creator Economy, etc.), 1–3 sample
+  posts each, a canned comment on ~40% of posts, and ~24 demo communities.
+- Every generated bio and post is template-based and explicitly labeled
+  "DEMO" / "AI DEMO" / "SAMPLE" — never framed as real news or attributed
+  to a real person, per spec §12.
+
+The landing page now shows a live **"Explore the platform — DEMO"** section
+(visible to anyone, no login needed) with sample creators, a sample feed,
+and sample communities, each card carrying a visible DEMO badge — so a
+first-time visitor sees the platform "alive" per spec §57, instead of an
+empty page.
+
 ## What's not yet built
 
-Demo/seed accounts, YouTube discovery, Earn Center, advertising, E2E
-encrypted messaging, admin dashboard, moderation, multilingual UI — later
-phases per the roadmap.
+YouTube discovery, Earn Center, advertising, E2E encrypted messaging, admin
+dashboard, moderation, multilingual UI — later phases per the roadmap.
 
 ## Next phase
 
-Phase 4 per the roadmap: 1,000 demo/AI seed accounts, demo content, demo
-communities, demo analytics, demo earnings — so the platform doesn't launch
-empty.
+Phase 5 per the roadmap: YouTube discovery (channel/video search via the
+YouTube Data API, official embeds only — no downloading or re-hosting).
+Needs a `YOUTUBE_API_KEY` kept server-side (a Supabase Edge Function), since
+it can't be safely called straight from the browser without exposing quota
+to abuse.
