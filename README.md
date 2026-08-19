@@ -117,15 +117,58 @@ and sample communities, each card carrying a visible DEMO badge — so a
 first-time visitor sees the platform "alive" per spec §57, instead of an
 empty page.
 
+## Phase 5 (now included)
+
+YouTube discovery — channel/video search using the official YouTube Data
+API v3, official embeds only. Per spec §14: no downloading, no re-hosting,
+no scraping of any other social platform.
+
+**Why an Edge Function**: the YouTube API key must never reach the browser
+— a client-exposed key can be extracted and abused against your quota
+within minutes. So the search call goes through a small server-side proxy:
+
+```
+Browser → sb.functions.invoke('youtube-search') → Edge Function (holds the key) → YouTube Data API
+```
+
+New file: `supabase/functions/youtube-search/index.ts`
+
+### Setup
+
+1. **Get a YouTube Data API key**: Google Cloud Console → enable "YouTube
+   Data API v3" → Credentials → Create API key. Restrict it to that API.
+2. **Install the Supabase CLI** if you don't have it: `npm install -g supabase`
+3. **Link and deploy**:
+   ```
+   supabase login
+   supabase link --project-ref <your-project-ref>
+   supabase functions deploy youtube-search
+   supabase secrets set YOUTUBE_API_KEY=your_key_here
+   ```
+   Your project ref is the subdomain in your Supabase URL
+   (`https://<project-ref>.supabase.co`).
+4. That's it — the frontend already calls it via `sb.functions.invoke(...)`,
+   which uses your existing anon key for auth automatically.
+
+### What it does in the app
+
+A new **YouTube tab**: search videos or channels, thumbnails link out to
+the real YouTube page, and tapping a video thumbnail plays it inline using
+YouTube's own `<iframe>` embed — never a downloaded file.
+
+### Graceful fallback
+
+If `YOUTUBE_API_KEY` isn't set yet, or the YouTube API errors out (quota,
+bad key, etc.), the function returns a clean empty result instead of
+crashing, and the tab shows "YouTube discovery isn't available right now"
+rather than a broken screen — per spec §45/§55.
+
 ## What's not yet built
 
-YouTube discovery, Earn Center, advertising, E2E encrypted messaging, admin
-dashboard, moderation, multilingual UI — later phases per the roadmap.
+Earn Center, advertising, E2E encrypted messaging, admin dashboard,
+moderation, multilingual UI — later phases per the roadmap.
 
 ## Next phase
 
-Phase 5 per the roadmap: YouTube discovery (channel/video search via the
-YouTube Data API, official embeds only — no downloading or re-hosting).
-Needs a `YOUTUBE_API_KEY` kept server-side (a Supabase Edge Function), since
-it can't be safely called straight from the browser without exposing quota
-to abuse.
+Phase 6 per the roadmap: Earn Center, Creator Studio, referral system,
+advertising architecture (demo ad marketplace first, per spec §16).

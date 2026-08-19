@@ -264,6 +264,16 @@
     background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
     padding:16px 20px;margin-bottom:10px;position:relative;
   }
+  .yt-card{
+    background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .yt-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000;cursor:pointer;}
+  .yt-body{padding:12px 14px;}
+  .yt-title{font-weight:600;font-size:0.88rem;margin-bottom:4px;line-height:1.3;}
+  .yt-channel{font-size:0.78rem;color:var(--paper-dim);margin-bottom:8px;}
+  .yt-embed{width:100%;aspect-ratio:16/9;border:0;display:block;}
+  .yt-link{font-size:0.78rem;color:var(--teal);text-decoration:none;}
   .skeleton{
     height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
     background-size:400% 100%;
@@ -371,6 +381,7 @@
   <div class="subnav">
     <button class="tabbtn active" id="tab-btn-home" data-tab="home">Home</button>
     <button class="tabbtn" id="tab-btn-communities" data-tab="communities">Communities</button>
+    <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube">YouTube</button>
     <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications">Alerts<span id="notif-dot" class="notif-dot hidden"></span></button>
     <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
     <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
@@ -445,6 +456,30 @@
       <p id="cd-desc" style="color:var(--paper-dim)"></p>
       <div id="cd-feed"></div>
     </div>
+  </div>
+
+  <!-- ---- YOUTUBE DISCOVERY TAB ---- -->
+  <div id="tab-youtube" class="tabpanel profilewrap hidden">
+    <p style="color:var(--paper-dim);font-size:0.85rem;margin-top:0">
+      Search official YouTube channels and videos. Playback uses YouTube's own embedded player — nothing is downloaded or re-hosted here.
+    </p>
+    <div class="field" style="display:flex;gap:8px;align-items:flex-end">
+      <div style="flex:1"><input type="text" id="yt-query" placeholder="Search YouTube…"></div>
+      <select id="yt-type" style="padding:11px 10px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--paper)">
+        <option value="video">Videos</option>
+        <option value="channel">Channels</option>
+      </select>
+      <button class="btn btn-solid" id="yt-search-btn">Search</button>
+    </div>
+
+    <div id="yt-loading" class="hidden"><div class="skeleton" style="width:60%"></div></div>
+    <div id="yt-error" class="hidden">
+      <p class="msg msg-error">YouTube discovery isn't available right now — check back later.</p>
+    </div>
+    <div id="yt-empty" class="hidden">
+      <p style="color:var(--paper-dim)">Search for a channel or video to get started.</p>
+    </div>
+    <div id="yt-results" class="demo-grid"></div>
   </div>
 
   <!-- ---- NOTIFICATIONS TAB ---- -->
@@ -538,7 +573,7 @@ function showView(name){
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','notifications','search','profile'].forEach(t => {
+  ['home','communities','youtube','notifications','search','profile'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     $('tab-btn-' + t).classList.toggle('active', t === tab);
   });
@@ -1164,6 +1199,62 @@ async function loadNotifications(){
   }
 }
 $('notif-retry').addEventListener('click', loadNotifications);
+
+/* ============ YOUTUBE DISCOVERY ============ */
+async function runYoutubeSearch(){
+  const query = $('yt-query').value.trim();
+  const type = $('yt-type').value;
+  hide($('yt-error')); hide($('yt-empty')); $('yt-results').innerHTML = '';
+  if (!query) return;
+
+  show($('yt-loading'));
+  const btn = $('yt-search-btn'); btn.disabled = true;
+
+  const { data, error } = await sb.functions.invoke('youtube-search', { body: { query, type } });
+
+  hide($('yt-loading')); btn.disabled = false;
+
+  if (error || !data || data.error){
+    show($('yt-error'));
+    return;
+  }
+  if (!data.items || data.items.length === 0){
+    show($('yt-empty'));
+    return;
+  }
+
+  $('yt-results').innerHTML = data.items.map(it => {
+    if (it.kind === 'video'){
+      return `<div class="yt-card" data-video-id="${it.videoId}">
+        <img class="yt-thumb" src="${it.thumbnail || ''}" alt="" loading="lazy">
+        <div class="yt-body">
+          <div class="yt-title">${escapeHtml(it.title)}</div>
+          <div class="yt-channel">${escapeHtml(it.channelTitle)}</div>
+          <a class="yt-link" href="https://www.youtube.com/watch?v=${it.videoId}" target="_blank" rel="noopener">Open on YouTube ↗</a>
+        </div>
+      </div>`;
+    } else {
+      return `<div class="yt-card">
+        <img class="yt-thumb" src="${it.thumbnail || ''}" alt="" loading="lazy" style="aspect-ratio:1/1">
+        <div class="yt-body">
+          <div class="yt-title">${escapeHtml(it.title)}</div>
+          <a class="yt-link" href="https://www.youtube.com/channel/${it.channelId}" target="_blank" rel="noopener">View channel ↗</a>
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  // tap a video thumbnail to play it inline via YouTube's official embed
+  document.querySelectorAll('.yt-card[data-video-id]').forEach(card => {
+    const thumb = card.querySelector('.yt-thumb');
+    thumb.addEventListener('click', () => {
+      const vid = card.dataset.videoId;
+      thumb.outerHTML = `<iframe class="yt-embed" src="https://www.youtube.com/embed/${vid}?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }, { once: true });
+  });
+}
+$('yt-search-btn').addEventListener('click', runYoutubeSearch);
+$('yt-query').addEventListener('keydown', (e) => { if (e.key === 'Enter') runYoutubeSearch(); });
 
 /* ============ DEMO PREVIEW (landing page, public, no auth) ============ */
 function demoAvatarStyle(hue){
