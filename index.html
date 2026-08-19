@@ -180,6 +180,7 @@
   .hidden{display:none !important;}
   .subnav{
     display:flex;gap:4px;max-width:640px;margin:0 auto;padding:16px 24px 0;
+    overflow-x:auto;
   }
   .tabbtn{
     background:none;border:none;color:var(--paper-dim);
@@ -219,6 +220,31 @@
   .search-result{
     display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);
   }
+  .notif-dot{
+    display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--marigold);margin-left:5px;vertical-align:middle;
+  }
+  .community-card{
+    background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;
+  }
+  .community-card .cc-body{flex:1;cursor:pointer;}
+  .community-card .cc-name{font-weight:600;}
+  .community-card .cc-meta{font-size:0.8rem;color:var(--paper-dim);}
+  .poll-card{margin-bottom:14px;}
+  .poll-option-row{
+    display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;position:relative;overflow:hidden;
+  }
+  .poll-option-row .fill{
+    position:absolute;left:0;top:0;bottom:0;background:rgba(245,166,35,0.15);z-index:0;
+  }
+  .poll-option-row .label{position:relative;z-index:1;font-size:0.88rem;}
+  .poll-option-row .pct{position:relative;z-index:1;font-size:0.8rem;color:var(--paper-dim);margin-left:auto;}
+  .notif-item{
+    display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);font-size:0.88rem;
+  }
+  .notif-item.unread{color:var(--paper);}
+  .notif-item:not(.unread){color:var(--paper-dim);}
   .skeleton{
     height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
     background-size:400% 100%;
@@ -306,6 +332,8 @@
 <main id="view-app" class="hidden">
   <div class="subnav">
     <button class="tabbtn active" id="tab-btn-home" data-tab="home">Home</button>
+    <button class="tabbtn" id="tab-btn-communities" data-tab="communities">Communities</button>
+    <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications">Alerts<span id="notif-dot" class="notif-dot hidden"></span></button>
     <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
     <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
   </div>
@@ -313,9 +341,26 @@
   <!-- ---- HOME / FEED TAB ---- -->
   <div id="tab-home" class="tabpanel profilewrap">
     <div class="card" style="margin-bottom:20px">
-      <textarea id="composer-text" placeholder="What's on your mind?" maxlength="2000"></textarea>
+      <div class="field" style="margin-bottom:12px">
+        <label for="composer-community">Post to</label>
+        <select id="composer-community"><option value="">My Feed</option></select>
+      </div>
+
+      <div id="composer-mode-post">
+        <textarea id="composer-text" placeholder="What's on your mind?" maxlength="2000"></textarea>
+      </div>
+      <div id="composer-mode-poll" class="hidden">
+        <div class="field"><input type="text" id="poll-question" placeholder="Ask a question…" maxlength="300"></div>
+        <div id="poll-options-wrap">
+          <div class="field"><input type="text" class="poll-option-input" placeholder="Option 1" maxlength="120"></div>
+          <div class="field"><input type="text" class="poll-option-input" placeholder="Option 2" maxlength="120"></div>
+        </div>
+        <button class="btn" id="btn-add-poll-option" type="button">+ Add option</button>
+      </div>
+
       <div id="composer-msg-slot"></div>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <button class="btn" id="btn-toggle-poll" type="button">📊 Poll</button>
         <button class="btn btn-solid" id="btn-post">Post</button>
       </div>
     </div>
@@ -332,6 +377,51 @@
       <p class="msg msg-ok">No posts yet — be the first to share something.</p>
     </div>
     <div id="feed-list"></div>
+  </div>
+
+  <!-- ---- COMMUNITIES TAB ---- -->
+  <div id="tab-communities" class="tabpanel profilewrap hidden">
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-top:0">Start a community</h3>
+      <div class="field"><input type="text" id="new-community-name" placeholder="Community name" maxlength="80"></div>
+      <div class="field"><textarea id="new-community-desc" placeholder="What's it about?"></textarea></div>
+      <div id="community-create-msg-slot"></div>
+      <button class="btn btn-solid" id="btn-create-community">Create community</button>
+    </div>
+
+    <div id="communities-loading">
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="width:40%"></div>
+    </div>
+    <div id="communities-error" class="hidden">
+      <p class="msg msg-error">Couldn't load communities. <button class="btn" id="communities-retry">Retry</button></p>
+    </div>
+    <div id="communities-empty" class="hidden">
+      <p class="msg msg-ok">No communities yet — start the first one above.</p>
+    </div>
+    <div id="communities-list"></div>
+
+    <div id="community-detail" class="hidden" style="margin-top:24px">
+      <button class="btn" id="btn-back-communities">← All communities</button>
+      <h2 id="cd-name" style="margin:16px 0 4px"></h2>
+      <p id="cd-desc" style="color:var(--paper-dim)"></p>
+      <div id="cd-feed"></div>
+    </div>
+  </div>
+
+  <!-- ---- NOTIFICATIONS TAB ---- -->
+  <div id="tab-notifications" class="tabpanel profilewrap hidden">
+    <div id="notif-loading">
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="width:40%"></div>
+    </div>
+    <div id="notif-error" class="hidden">
+      <p class="msg msg-error">Couldn't load notifications. <button class="btn" id="notif-retry">Retry</button></p>
+    </div>
+    <div id="notif-empty" class="hidden">
+      <p style="color:var(--paper-dim)">No notifications yet.</p>
+    </div>
+    <div id="notif-list"></div>
   </div>
 
   <!-- ---- SEARCH TAB ---- -->
@@ -410,12 +500,14 @@ function showView(name){
 let currentUser = null;
 
 function showTab(tab){
-  ['home','search','profile'].forEach(t => {
+  ['home','communities','notifications','search','profile'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     $('tab-btn-' + t).classList.toggle('active', t === tab);
   });
   if (tab === 'home') loadFeed();
-  if (tab === 'profile') loadProfile();
+  if (tab === 'profile') loadProfileTabOnly();
+  if (tab === 'communities') loadCommunities();
+  if (tab === 'notifications') loadNotifications();
 }
 document.querySelectorAll('.tabbtn').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
@@ -520,6 +612,7 @@ async function loadProfile(){
   currentUser = user || null;
   showView('app');
   showTabChrome();
+  checkUnreadNotifDot();
   await loadProfileTabOnly();
 }
 function showTabChrome(){
@@ -570,37 +663,233 @@ $('btn-save').addEventListener('click', async () => {
   else { flash('save-msg-slot', 'Saved.', 'ok'); }
 });
 
-/* ============ FEED ============ */
-async function loadFeed(){
-  show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
+/* ============ COMMUNITIES ============ */
+let myCommunityIds = new Set();
+let currentCommunityId = null;
+
+async function populateComposerCommunities(){
+  const sel = $('composer-community');
+  sel.innerHTML = '<option value="">My Feed</option>';
+  if (!currentUser) return;
+  const { data } = await sb.from('community_members').select('community_id, communities(name)').eq('user_id', currentUser.id);
+  (data || []).forEach(row => {
+    if (row.communities){
+      const opt = document.createElement('option');
+      opt.value = row.community_id;
+      opt.textContent = row.communities.name;
+      sel.appendChild(opt);
+    }
+  });
+}
+
+function slugify(name){
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+$('btn-create-community').addEventListener('click', async () => {
+  if (!currentUser){ showTab('profile'); return; }
+  const name = $('new-community-name').value.trim();
+  const desc = $('new-community-desc').value.trim();
+  clearFlash('community-create-msg-slot');
+  if (!name){ flash('community-create-msg-slot', 'Give your community a name.', 'error'); return; }
+
+  const btn = $('btn-create-community'); btn.disabled = true; btn.textContent = 'Creating…';
+  const { data: community, error } = await sb.from('communities').insert({
+    name, description: desc, creator_id: currentUser.id, slug: slugify(name)
+  }).select().single();
+  btn.disabled = false; btn.textContent = 'Create community';
+
+  if (error){ flash('community-create-msg-slot', 'Could not create — ' + error.message, 'error'); return; }
+
+  await sb.from('community_members').insert({ community_id: community.id, user_id: currentUser.id, role: 'admin' });
+  $('new-community-name').value = ''; $('new-community-desc').value = '';
+  flash('community-create-msg-slot', 'Community created.', 'ok');
+  await loadCommunities();
+});
+
+async function loadCommunities(){
+  hide($('community-detail'));
+  show($('communities-loading')); hide($('communities-error')); hide($('communities-empty')); $('communities-list').innerHTML = '';
+
+  const { data: communities, error } = await sb.from('communities').select('*').eq('status', 'ACTIVE').order('members_count', { ascending: false }).limit(50);
+  hide($('communities-loading'));
+  if (error){ show($('communities-error')); return; }
+  if (!communities || communities.length === 0){ show($('communities-empty')); return; }
+
+  if (currentUser){
+    const { data: memberships } = await sb.from('community_members').select('community_id').eq('user_id', currentUser.id);
+    myCommunityIds = new Set((memberships || []).map(m => m.community_id));
+  }
+
+  $('communities-list').innerHTML = communities.map(c => `
+    <div class="community-card" data-cid="${c.id}">
+      <div class="cc-body" data-open-community="${c.id}">
+        <div class="cc-name">${escapeHtml(c.name)}</div>
+        <div class="cc-meta">${c.members_count} members${c.description ? ' · ' + escapeHtml(c.description) : ''}</div>
+      </div>
+      ${currentUser ? `<button class="btn join-btn ${myCommunityIds.has(c.id) ? 'is-member' : ''}">${myCommunityIds.has(c.id) ? 'Joined' : 'Join'}</button>` : ''}
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.community-card').forEach(card => {
+    const cid = card.dataset.cid;
+    card.querySelector('[data-open-community]').addEventListener('click', () => openCommunity(cid, card.querySelector('.cc-name').textContent, card.querySelector('.cc-meta').textContent));
+    const joinBtn = card.querySelector('.join-btn');
+    if (joinBtn){
+      joinBtn.addEventListener('click', async () => {
+        joinBtn.disabled = true;
+        if (joinBtn.classList.contains('is-member')){
+          await sb.from('community_members').delete().eq('community_id', cid).eq('user_id', currentUser.id);
+          joinBtn.classList.remove('is-member'); joinBtn.textContent = 'Join';
+          myCommunityIds.delete(cid);
+        } else {
+          await sb.from('community_members').insert({ community_id: cid, user_id: currentUser.id });
+          joinBtn.classList.add('is-member'); joinBtn.textContent = 'Joined';
+          myCommunityIds.add(cid);
+        }
+        joinBtn.disabled = false;
+        populateComposerCommunities();
+      });
+    }
+  });
+}
+
+async function openCommunity(cid, name, meta){
+  currentCommunityId = cid;
+  show($('community-detail'));
+  $('cd-name').textContent = name;
+  $('cd-desc').textContent = meta;
+  $('cd-feed').innerHTML = `<div class="skeleton" style="width:60%"></div>`;
 
   const { data: posts, error } = await sb
     .from('posts')
     .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('community_id', cid)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false })
     .limit(30);
 
-  hide($('feed-loading'));
-  if (error){ show($('feed-error')); return; }
-  if (!posts || posts.length === 0){ show($('feed-empty')); return; }
+  if (error){ $('cd-feed').innerHTML = `<p class="msg msg-error">Couldn't load posts.</p>`; return; }
+  if (!posts || posts.length === 0){ $('cd-feed').innerHTML = `<p style="color:var(--paper-dim)">No posts in this community yet.</p>`; return; }
 
-  // which of these posts has the current user liked?
   let likedSet = new Set();
   if (currentUser){
     const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
     likedSet = new Set((myLikes || []).map(l => l.post_id));
   }
-  // which authors does the current user already follow?
+  $('cd-feed').innerHTML = posts.map(p => renderPost(p, likedSet.has(p.id), true)).join('');
+  posts.forEach(p => wirePostCard(p.id));
+}
+
+$('btn-back-communities').addEventListener('click', () => { currentCommunityId = null; hide($('community-detail')); });
+$('communities-retry').addEventListener('click', loadCommunities);
+
+/* ============ POLL COMPOSER ============ */
+let pollMode = false;
+$('btn-toggle-poll').addEventListener('click', () => {
+  pollMode = !pollMode;
+  $('composer-mode-post').classList.toggle('hidden', pollMode);
+  $('composer-mode-poll').classList.toggle('hidden', !pollMode);
+  $('btn-toggle-poll').classList.toggle('active', pollMode);
+});
+$('btn-add-poll-option').addEventListener('click', () => {
+  const wrap = $('poll-options-wrap');
+  if (wrap.children.length >= 4) return;
+  const field = document.createElement('div');
+  field.className = 'field';
+  field.innerHTML = `<input type="text" class="poll-option-input" placeholder="Option ${wrap.children.length + 1}" maxlength="120">`;
+  wrap.appendChild(field);
+});
+
+/* ============ FEED ============ */
+async function loadFeed(){
+  show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
+  populateComposerCommunities();
+
+  const { data: posts, error } = await sb
+    .from('posts')
+    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('status', 'ACTIVE')
+    .is('community_id', null)
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  const { data: polls } = await sb
+    .from('polls')
+    .select('id, question, created_at, author_id, profiles!polls_author_id_fkey(username, display_name), poll_options(id, option_text, votes_count)')
+    .eq('status', 'ACTIVE')
+    .is('community_id', null)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  hide($('feed-loading'));
+  if (error){ show($('feed-error')); return; }
+  if ((!posts || posts.length === 0) && (!polls || polls.length === 0)){ show($('feed-empty')); return; }
+
+  let myVotes = new Set();
+  if (currentUser && polls && polls.length){
+    const { data: votes } = await sb.from('poll_votes').select('poll_id').eq('user_id', currentUser.id).in('poll_id', polls.map(p => p.id));
+    myVotes = new Set((votes || []).map(v => v.poll_id));
+  }
+
+  let likedSet = new Set();
   let followingSet = new Set();
-  if (currentUser){
+  if (currentUser && posts && posts.length){
+    const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
+    likedSet = new Set((myLikes || []).map(l => l.post_id));
     const authorIds = [...new Set(posts.map(p => p.author_id))];
     const { data: myFollows } = await sb.from('follows').select('following_id').eq('follower_id', currentUser.id).in('following_id', authorIds);
     followingSet = new Set((myFollows || []).map(f => f.following_id));
   }
 
-  $('feed-list').innerHTML = posts.map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join('');
-  posts.forEach(p => wirePostCard(p.id));
+  const pollsHtml = (polls || []).map(p => renderPoll(p, myVotes.has(p.id))).join('');
+  const postsHtml = (posts || []).map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join('');
+  $('feed-list').innerHTML = pollsHtml + postsHtml;
+
+  (polls || []).forEach(p => wirePollCard(p.id));
+  (posts || []).forEach(p => wirePostCard(p.id));
+}
+
+function renderPoll(poll, voted){
+  const author = poll.profiles || {};
+  const name = author.display_name || author.username || 'Unknown';
+  const options = poll.poll_options || [];
+  const total = options.reduce((s, o) => s + o.votes_count, 0) || 1;
+  return `
+    <div class="post poll-card" data-poll-id="${poll.id}">
+      <div class="post-head">
+        <div class="post-avatar">${initials(name)}</div>
+        <div>
+          <div class="post-author">${escapeHtml(name)}</div>
+          <div class="post-meta">@${escapeHtml(author.username || '')} · ${timeAgo(poll.created_at)} · 📊 Poll</div>
+        </div>
+      </div>
+      <div class="post-content">${escapeHtml(poll.question)}</div>
+      <div class="poll-options">
+        ${options.map(o => `
+          <div class="poll-option-row" data-option-id="${o.id}" data-voted="${voted}">
+            <div class="fill" style="width:${voted ? Math.round(o.votes_count/total*100) : 0}%"></div>
+            <span class="label">${escapeHtml(o.option_text)}</span>
+            <span class="pct">${voted ? Math.round(o.votes_count/total*100) + '%' : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function wirePollCard(pollId){
+  const card = document.querySelector(`.poll-card[data-poll-id="${pollId}"]`);
+  if (!card) return;
+  card.querySelectorAll('.poll-option-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      if (!currentUser){ showTab('profile'); return; }
+      if (row.dataset.voted === 'true') return;
+      const optionId = row.dataset.optionId;
+      const { error } = await sb.from('poll_votes').insert({ poll_id: pollId, option_id: optionId, user_id: currentUser.id });
+      if (!error) loadFeed();
+    });
+  });
 }
 
 function renderPost(p, liked, following){
@@ -722,17 +1011,37 @@ $('feed-retry').addEventListener('click', loadFeed);
 
 $('btn-post').addEventListener('click', async () => {
   if (!currentUser){ showTab('profile'); return; }
-  const text = $('composer-text').value.trim();
   clearFlash('composer-msg-slot');
-  if (!text){ flash('composer-msg-slot', 'Write something before posting.', 'error'); return; }
+  const communityId = $('composer-community').value || null;
+  const btn = $('btn-post');
 
-  const btn = $('btn-post'); btn.disabled = true; btn.textContent = 'Posting…';
-  const { error } = await sb.from('posts').insert({ author_id: currentUser.id, content: text });
-  btn.disabled = false; btn.textContent = 'Post';
+  if (pollMode){
+    const question = $('poll-question').value.trim();
+    const optionInputs = [...document.querySelectorAll('.poll-option-input')].map(i => i.value.trim()).filter(Boolean);
+    if (!question || optionInputs.length < 2){
+      flash('composer-msg-slot', 'Add a question and at least 2 options.', 'error'); return;
+    }
+    btn.disabled = true; btn.textContent = 'Posting…';
+    const { data: poll, error } = await sb.from('polls').insert({ author_id: currentUser.id, question, community_id: communityId }).select().single();
+    if (error){ btn.disabled = false; btn.textContent = 'Post'; flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
+    const optionRows = optionInputs.map((text, i) => ({ poll_id: poll.id, option_text: text, position: i }));
+    await sb.from('poll_options').insert(optionRows);
+    btn.disabled = false; btn.textContent = 'Post';
+    $('poll-question').value = '';
+    document.querySelectorAll('.poll-option-input').forEach((el, i) => { if (i > 1) el.closest('.field').remove(); else el.value = ''; });
+    $('btn-toggle-poll').click();
+  } else {
+    const text = $('composer-text').value.trim();
+    if (!text){ flash('composer-msg-slot', 'Write something before posting.', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Posting…';
+    const { error } = await sb.from('posts').insert({ author_id: currentUser.id, content: text, community_id: communityId });
+    btn.disabled = false; btn.textContent = 'Post';
+    if (error){ flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
+    $('composer-text').value = '';
+  }
 
-  if (error){ flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
-  $('composer-text').value = '';
-  await loadFeed();
+  if (communityId){ await openCommunity(communityId, $('composer-community').selectedOptions[0].textContent, ''); showTab('communities'); $('community-detail').scrollIntoView(); }
+  else { await loadFeed(); }
 });
 
 /* ============ SEARCH ============ */
@@ -772,6 +1081,52 @@ async function runSearch(){
   if (!html) html = `<p style="color:var(--paper-dim)">No results for "${escapeHtml(q)}".</p>`;
   $('search-results').innerHTML = html;
 }
+
+/* ============ NOTIFICATIONS ============ */
+async function checkUnreadNotifDot(){
+  if (!currentUser) return;
+  const { count } = await sb.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+  $('notif-dot').classList.toggle('hidden', !count);
+}
+
+const notifLabels = {
+  follow: 'started following you',
+  like: 'liked your post',
+  comment: 'commented on your post',
+  community_join: 'joined your community',
+  poll_vote: 'voted on your poll'
+};
+
+async function loadNotifications(){
+  if (!currentUser){ hide($('notif-loading')); show($('notif-empty')); $('notif-list').innerHTML = ''; return; }
+  show($('notif-loading')); hide($('notif-error')); hide($('notif-empty')); $('notif-list').innerHTML = '';
+
+  const { data: notifs, error } = await sb
+    .from('notifications')
+    .select('id, type, is_read, created_at, actor_id, profiles!notifications_actor_id_fkey(username, display_name)')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  hide($('notif-loading'));
+  if (error){ show($('notif-error')); return; }
+  if (!notifs || notifs.length === 0){ show($('notif-empty')); return; }
+
+  $('notif-list').innerHTML = notifs.map(n => {
+    const a = n.profiles || {};
+    return `<div class="notif-item ${n.is_read ? '' : 'unread'}">
+      <div class="post-avatar" style="width:30px;height:30px;font-size:0.78rem">${initials(a.display_name || a.username || '?')}</div>
+      <div><b>${escapeHtml(a.display_name || a.username || 'Someone')}</b> ${notifLabels[n.type] || 'sent you a notification'} · <span class="post-meta">${timeAgo(n.created_at)}</span></div>
+    </div>`;
+  }).join('');
+
+  const unreadIds = notifs.filter(n => !n.is_read).map(n => n.id);
+  if (unreadIds.length){
+    await sb.from('notifications').update({ is_read: true }).in('id', unreadIds);
+    $('notif-dot').classList.add('hidden');
+  }
+}
+$('notif-retry').addEventListener('click', loadNotifications);
 
 /* ---- boot: restore session if present ---- */
 (async () => {

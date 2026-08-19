@@ -67,13 +67,38 @@ The frontend (`index.html`) now has a logged-in app shell with three tabs:
   post content
 - **Profile** — unchanged from Phase 1 (channel name, bio, referral code)
 
+## Phase 3 (now included)
+
+Run `supabase/schema_phase3.sql` **after** `schema.sql` and
+`schema_phase2.sql`. It adds:
+
+- `communities`, `community_members` — plus `posts.community_id` (nullable)
+  so any post can optionally belong to a community
+- `polls`, `poll_options`, `poll_votes` — one vote per user per poll,
+  enforced by a primary key, with a trigger keeping `votes_count` in sync
+- `notifications` — written only by security-definer trigger functions
+  (follow, like, comment) so the client can never forge one; the recipient
+  can read and mark their own as read, nothing else
+
+New in the frontend:
+
+- **Communities tab** — create a community, browse/join others, open one to
+  see its own feed
+- **Composer** — a "Post to" dropdown (your feed or any community you've
+  joined) and a poll toggle (question + 2–4 options)
+- **Alerts tab** — follows/likes/comments notifications, with an unread dot
+  on the tab; opening the tab marks them read
+- Polls appear inline in the Home feed (and inside a community's feed);
+  tapping an option votes once and reveals live percentages
+
 ## What's not yet built
 
-Communities, polls, notifications, demo/seed accounts, YouTube discovery,
-Earn Center, advertising, E2E encrypted messaging, admin dashboard,
-moderation, multilingual UI — these are later phases per the roadmap.
+Demo/seed accounts, YouTube discovery, Earn Center, advertising, E2E
+encrypted messaging, admin dashboard, moderation, multilingual UI — later
+phases per the roadmap.
 
 ## Next phase
 
-Phase 3 per the roadmap: communities, polls, notifications, creator
-channels (channel pages beyond the current "my channel" settings card).
+Phase 4 per the roadmap: 1,000 demo/AI seed accounts, demo content, demo
+communities, demo analytics, demo earnings — so the platform doesn't launch
+empty.
