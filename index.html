@@ -274,6 +274,15 @@
   .yt-channel{font-size:0.78rem;color:var(--paper-dim);margin-bottom:8px;}
   .yt-embed{width:100%;aspect-ratio:16/9;border:0;display:block;}
   .yt-link{font-size:0.78rem;color:var(--teal);text-decoration:none;}
+  .ledger-row{display:flex;justify-content:space-between;font-size:0.83rem;padding:8px 0;border-bottom:1px solid var(--line);}
+  .ledger-row .status-pending{color:var(--marigold);}
+  .ledger-row .status-available{color:var(--teal);}
+  .elig-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+  .elig-ok{color:var(--teal);}
+  .elig-no{color:var(--paper-dim);}
+  .sponsored-card{border-color:rgba(245,166,35,0.4) !important;}
+  .sponsored-tag{font-size:0.7rem;font-weight:700;letter-spacing:0.05em;color:var(--marigold);text-transform:uppercase;}
+  .campaign-row{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:0.85rem;}
   .skeleton{
     height:16px;border-radius:6px;background:linear-gradient(90deg,var(--ink-soft) 25%,rgba(255,255,255,0.06) 37%,var(--ink-soft) 63%);
     background-size:400% 100%;
@@ -370,6 +379,7 @@
       <div class="field"><label for="su-name">Display name</label><input id="su-name" type="text" autocomplete="name"></div>
       <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email"></div>
       <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="6"></div>
+      <div class="field"><label for="su-referral">Referral code (optional)</label><input id="su-referral" type="text" placeholder="e.g. NEX-ABC123"></div>
       <button class="btn btn-solid" id="btn-signup" style="width:100%">Create account</button>
       <div class="switcher">Already have an account? <button id="to-login">Log in</button></div>
     </div>
@@ -382,6 +392,7 @@
     <button class="tabbtn active" id="tab-btn-home" data-tab="home">Home</button>
     <button class="tabbtn" id="tab-btn-communities" data-tab="communities">Communities</button>
     <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube">YouTube</button>
+    <button class="tabbtn" id="tab-btn-earn" data-tab="earn">Earn</button>
     <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications">Alerts<span id="notif-dot" class="notif-dot hidden"></span></button>
     <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
     <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
@@ -425,6 +436,7 @@
     <div id="feed-empty" class="hidden">
       <p class="msg msg-ok">No posts yet — be the first to share something.</p>
     </div>
+    <div id="sponsored-slot"></div>
     <div id="feed-list"></div>
   </div>
 
@@ -480,6 +492,54 @@
       <p style="color:var(--paper-dim)">Search for a channel or video to get started.</p>
     </div>
     <div id="yt-results" class="demo-grid"></div>
+  </div>
+
+  <!-- ---- EARN CENTER TAB ---- -->
+  <div id="tab-earn" class="tabpanel profilewrap hidden">
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">My Earnings</h3>
+      <div class="stats">
+        <div class="stat"><div class="val" id="earn-total">₹0</div><div class="lbl">Total</div></div>
+        <div class="stat"><div class="val" id="earn-pending">₹0</div><div class="lbl">Pending</div></div>
+        <div class="stat"><div class="val" id="earn-available">₹0</div><div class="lbl">Available</div></div>
+      </div>
+      <p style="color:var(--paper-dim);font-size:0.8rem;margin-top:12px">Actual earnings depend on eligibility, advertiser demand, genuine engagement, applicable policies, geography and other factors.</p>
+      <div id="earn-ledger"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Referrals</h3>
+      <p style="font-size:0.85rem">Your code: <strong id="earn-referral-code">—</strong></p>
+      <div class="stats">
+        <div class="stat"><div class="val" id="ref-invites">0</div><div class="lbl">Invited</div></div>
+        <div class="stat"><div class="val" id="ref-qualified">0</div><div class="lbl">Qualified</div></div>
+      </div>
+      <p style="color:var(--paper-dim);font-size:0.8rem;margin-top:8px" id="ref-rate-note"></p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Creator Monetization Eligibility</h3>
+      <div id="eligibility-list" style="font-size:0.88rem"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Advertising — Demo Marketplace</h3>
+      <p style="color:var(--paper-dim);font-size:0.82rem">Illustrative campaign infrastructure — no real payment processing is connected yet.</p>
+      <div id="advertiser-setup">
+        <div class="field"><input type="text" id="advertiser-company" placeholder="Company / brand name"></div>
+        <button class="btn" id="btn-become-advertiser">Register as advertiser</button>
+      </div>
+      <div id="campaign-form" class="hidden" style="margin-top:16px">
+        <div class="field"><input type="text" id="campaign-name" placeholder="Campaign name"></div>
+        <div class="field"><input type="text" id="campaign-headline" placeholder="Ad headline" maxlength="120"></div>
+        <div class="field"><textarea id="campaign-body" placeholder="Ad text"></textarea></div>
+        <div class="field"><input type="text" id="campaign-url" placeholder="https://your-landing-page.com"></div>
+        <div class="field"><input type="number" id="campaign-budget" placeholder="Demo budget (₹)" min="0"></div>
+        <div id="campaign-msg-slot"></div>
+        <button class="btn btn-solid" id="btn-create-campaign">Launch demo campaign</button>
+      </div>
+      <div id="my-campaigns" style="margin-top:16px"></div>
+    </div>
   </div>
 
   <!-- ---- NOTIFICATIONS TAB ---- -->
@@ -573,7 +633,7 @@ function showView(name){
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','youtube','notifications','search','profile'].forEach(t => {
+  ['home','communities','youtube','earn','notifications','search','profile'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     $('tab-btn-' + t).classList.toggle('active', t === tab);
   });
@@ -581,6 +641,7 @@ function showTab(tab){
   if (tab === 'profile') loadProfileTabOnly();
   if (tab === 'communities') loadCommunities();
   if (tab === 'notifications') loadNotifications();
+  if (tab === 'earn') loadEarnCenter();
 }
 document.querySelectorAll('.tabbtn').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
@@ -626,6 +687,7 @@ $('btn-signup').addEventListener('click', async () => {
   const name = $('su-name').value.trim();
   const email = $('su-email').value.trim();
   const password = $('su-pass').value;
+  const referral = $('su-referral').value.trim();
   clearFlash('auth-msg-slot');
 
   if (!email || !password || password.length < 6){
@@ -636,7 +698,7 @@ $('btn-signup').addEventListener('click', async () => {
 
   const { data, error } = await sb.auth.signUp({
     email, password,
-    options: { data: { display_name: name || null } }
+    options: { data: { display_name: name || null, referral_code: referral || null } }
   });
 
   btn.disabled = false; btn.textContent = 'Create account';
@@ -877,6 +939,7 @@ $('btn-add-poll-option').addEventListener('click', () => {
 async function loadFeed(){
   show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
   populateComposerCommunities();
+  loadSponsoredCard();
 
   const { data: posts, error } = await sb
     .from('posts')
@@ -1199,6 +1262,155 @@ async function loadNotifications(){
   }
 }
 $('notif-retry').addEventListener('click', loadNotifications);
+
+/* ============ SPONSORED (demo ad marketplace) ============ */
+async function loadSponsoredCard(){
+  const slot = $('sponsored-slot');
+  slot.innerHTML = '';
+  const { data: campaigns } = await sb.from('ad_campaigns').select('*').eq('status', 'active').eq('slot', 'HOME_FEED_TOP').limit(5);
+  if (!campaigns || campaigns.length === 0) return;
+  const c = campaigns[Math.floor(Math.random() * campaigns.length)];
+
+  slot.innerHTML = `
+    <div class="post sponsored-card">
+      <div class="sponsored-tag">Sponsored</div>
+      <div class="post-content" style="margin-top:6px"><strong>${escapeHtml(c.headline)}</strong><br>${escapeHtml(c.body)}</div>
+      <div class="post-actions">
+        <a class="btn btn-solid" style="text-decoration:none" href="${c.target_url}" target="_blank" rel="noopener" id="sponsored-link">Learn more</a>
+        <button id="sponsored-why" style="margin-left:auto">Why am I seeing this?</button>
+        <button id="sponsored-hide">Hide</button>
+        <button id="sponsored-report">Report</button>
+      </div>
+    </div>
+  `;
+
+  // log one impression per render
+  sb.from('ad_events').insert({ campaign_id: c.id, event_type: 'impression', user_id: currentUser ? currentUser.id : null });
+
+  $('sponsored-link').addEventListener('click', () => {
+    sb.from('ad_events').insert({ campaign_id: c.id, event_type: 'click', user_id: currentUser ? currentUser.id : null });
+  });
+  $('sponsored-why').addEventListener('click', () => {
+    flash('composer-msg-slot', 'Ads are shown based on the slot they were placed in — not on tracking your personal activity in this demo marketplace.', 'ok');
+  });
+  $('sponsored-hide').addEventListener('click', () => { slot.innerHTML = ''; });
+  $('sponsored-report').addEventListener('click', () => {
+    slot.innerHTML = `<p class="msg msg-ok">Thanks — we'll take a look at this ad.</p>`;
+  });
+}
+
+/* ============ EARN CENTER ============ */
+let platformSettingsCache = null;
+async function getPlatformSettings(){
+  if (platformSettingsCache) return platformSettingsCache;
+  const { data } = await sb.from('platform_settings').select('key, value');
+  const map = {};
+  (data || []).forEach(r => { map[r.key] = r.value; });
+  platformSettingsCache = map;
+  return map;
+}
+
+async function loadEarnCenter(){
+  if (!currentUser) return;
+  const settings = await getPlatformSettings();
+
+  // earnings ledger
+  const { data: events } = await sb.from('earning_events').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+  const total = (events || []).reduce((s, e) => s + e.amount_inr, 0);
+  const pending = (events || []).filter(e => e.status === 'pending').reduce((s, e) => s + e.amount_inr, 0);
+  const available = (events || []).filter(e => e.status === 'available').reduce((s, e) => s + e.amount_inr, 0);
+  $('earn-total').textContent = '₹' + total.toLocaleString();
+  $('earn-pending').textContent = '₹' + pending.toLocaleString();
+  $('earn-available').textContent = '₹' + available.toLocaleString();
+  $('earn-ledger').innerHTML = (events || []).length
+    ? events.map(e => `<div class="ledger-row"><span>${escapeHtml(e.note || e.type)}</span><span class="status-${e.status}">₹${e.amount_inr} · ${e.status}</span></div>`).join('')
+    : `<p style="color:var(--paper-dim);font-size:0.85rem">No earning events yet.</p>`;
+
+  // referrals
+  const { data: profile } = await sb.from('profiles').select('referral_code').eq('id', currentUser.id).single();
+  $('earn-referral-code').textContent = profile?.referral_code || '—';
+  const { data: refs } = await sb.from('referrals').select('status').eq('referrer_id', currentUser.id);
+  $('ref-invites').textContent = (refs || []).length;
+  $('ref-qualified').textContent = (refs || []).filter(r => r.status === 'qualified').length;
+  $('ref-rate-note').textContent = `Earn ₹${settings.REFERRAL_REWARD_RATE_INR || '—'} (pending) when someone you refer makes their first post.`;
+
+  // eligibility
+  const { data: myProfile } = await sb.from('profiles').select('channel_followers_count, channel_posts_count').eq('id', currentUser.id).single();
+  const minFollowers = parseInt(settings.MINIMUM_CREATOR_FOLLOWERS || '0');
+  const minPosts = parseInt(settings.MINIMUM_CREATOR_POSTS || '0');
+  const followersOk = (myProfile?.channel_followers_count || 0) >= minFollowers;
+  const postsOk = (myProfile?.channel_posts_count || 0) >= minPosts;
+  $('eligibility-list').innerHTML = `
+    <div class="elig-row"><span>Minimum followers (${minFollowers})</span><span class="${followersOk ? 'elig-ok' : 'elig-no'}">${myProfile?.channel_followers_count || 0} ${followersOk ? '✓' : ''}</span></div>
+    <div class="elig-row"><span>Minimum posts (${minPosts})</span><span class="${postsOk ? 'elig-ok' : 'elig-no'}">${myProfile?.channel_posts_count || 0} ${postsOk ? '✓' : ''}</span></div>
+    <div class="elig-row"><span>Minimum payout threshold</span><span>₹${settings.MINIMUM_PAYOUT_INR || '—'}</span></div>
+  `;
+
+  await loadAdvertiserPanel();
+}
+
+async function loadAdvertiserPanel(){
+  const { data: advertiser } = await sb.from('advertisers').select('*').eq('user_id', currentUser.id).maybeSingle();
+  if (advertiser){
+    hide($('advertiser-setup'));
+    show($('campaign-form'));
+    await loadMyCampaigns(advertiser.id);
+  } else {
+    show($('advertiser-setup'));
+    hide($('campaign-form'));
+    $('my-campaigns').innerHTML = '';
+  }
+}
+
+$('btn-become-advertiser').addEventListener('click', async () => {
+  const name = $('advertiser-company').value.trim();
+  if (!name) return;
+  const btn = $('btn-become-advertiser'); btn.disabled = true;
+  const { error } = await sb.from('advertisers').insert({ user_id: currentUser.id, company_name: name });
+  btn.disabled = false;
+  if (!error) await loadAdvertiserPanel();
+});
+
+$('btn-create-campaign').addEventListener('click', async () => {
+  const { data: advertiser } = await sb.from('advertisers').select('id').eq('user_id', currentUser.id).single();
+  if (!advertiser) return;
+
+  const name = $('campaign-name').value.trim();
+  const headline = $('campaign-headline').value.trim();
+  const body = $('campaign-body').value.trim();
+  const url = $('campaign-url').value.trim();
+  const budget = parseInt($('campaign-budget').value) || 0;
+  clearFlash('campaign-msg-slot');
+
+  if (!name || !headline || !url){
+    flash('campaign-msg-slot', 'Name, headline and a URL are required.', 'error'); return;
+  }
+  if (!/^https?:\/\//i.test(url)){
+    flash('campaign-msg-slot', 'URL must start with http:// or https://', 'error'); return;
+  }
+
+  const btn = $('btn-create-campaign'); btn.disabled = true; btn.textContent = 'Launching…';
+  const { error } = await sb.from('ad_campaigns').insert({
+    advertiser_id: advertiser.id, name, headline, body, target_url: url, budget_inr: budget, slot: 'HOME_FEED_TOP'
+  });
+  btn.disabled = false; btn.textContent = 'Launch demo campaign';
+
+  if (error){ flash('campaign-msg-slot', 'Could not launch — ' + error.message, 'error'); return; }
+  $('campaign-name').value = ''; $('campaign-headline').value = ''; $('campaign-body').value = ''; $('campaign-url').value = ''; $('campaign-budget').value = '';
+  flash('campaign-msg-slot', 'Campaign is live in the demo marketplace.', 'ok');
+  await loadMyCampaigns(advertiser.id);
+});
+
+async function loadMyCampaigns(advertiserId){
+  const { data: campaigns } = await sb.from('ad_campaigns').select('*').eq('advertiser_id', advertiserId).order('created_at', { ascending: false });
+  if (!campaigns || campaigns.length === 0){ $('my-campaigns').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No campaigns yet.</p>`; return; }
+  $('my-campaigns').innerHTML = campaigns.map(c => `
+    <div class="campaign-row">
+      <strong>${escapeHtml(c.name)}</strong> — ${escapeHtml(c.status)}<br>
+      <span style="color:var(--paper-dim)">${c.impressions_count} impressions · ${c.clicks_count} clicks · ₹${c.budget_inr} budget</span>
+    </div>
+  `).join('');
+}
 
 /* ============ YOUTUBE DISCOVERY ============ */
 async function runYoutubeSearch(){

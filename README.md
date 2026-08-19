@@ -163,12 +163,43 @@ bad key, etc.), the function returns a clean empty result instead of
 crashing, and the tab shows "YouTube discovery isn't available right now"
 rather than a broken screen — per spec §45/§55.
 
+## Phase 6 (now included)
+
+Earn Center, referral system, and a demo advertising marketplace. Run
+`supabase/schema_phase6.sql` **after** phases 1–4.
+
+- **`platform_settings`** — revenue-share and eligibility numbers
+  (`REFERRAL_REWARD_RATE_INR`, `MINIMUM_CREATOR_FOLLOWERS`, etc.) live in
+  the database, publicly readable but never writable by the client — per
+  spec §20, these are never hard-coded in frontend JS.
+- **Referrals are now functional**: signup has an optional referral-code
+  field; when a referred user makes their first post, a trigger marks the
+  referral "qualified" and credits the referrer a *pending* earning event
+  at the configured rate — no fake instant payouts.
+- **`earning_events`** — a real ledger, trigger-only writes, readable only
+  by its owner. The Earn tab shows total/pending/available plus the full
+  event list.
+- **Demo ad marketplace**: any user can register as an advertiser and
+  launch a campaign (headline, body, target URL, demo budget) for the
+  `HOME_FEED_TOP` slot. One active campaign shows at the top of the Home
+  feed, clearly marked **Sponsored**, with "Why am I seeing this?", Hide,
+  and Report controls per spec §48. Impressions/clicks are logged to
+  `ad_events` and rolled up into each campaign's counters automatically.
+- **Creator eligibility**: the Earn tab checks the logged-in user's
+  followers/posts against the configured minimums and shows a clear ✓ or
+  a gap — transparent, not a black box.
+
+This is illustrative infrastructure — no real payment processor or ad
+network (Google Ad Manager, etc.) is connected. That's future work once
+the platform is ready for it, per spec §16.
+
 ## What's not yet built
 
-Earn Center, advertising, E2E encrypted messaging, admin dashboard,
-moderation, multilingual UI — later phases per the roadmap.
+E2E encrypted messaging, admin dashboard, moderation, multilingual UI —
+later phases per the roadmap.
 
 ## Next phase
 
-Phase 6 per the roadmap: Earn Center, Creator Studio, referral system,
-advertising architecture (demo ad marketplace first, per spec §16).
+Phase 7 per the roadmap: Privacy Center, E2E messaging architecture,
+security hardening, moderation (report/block/mute workflows and an
+admin review queue).
