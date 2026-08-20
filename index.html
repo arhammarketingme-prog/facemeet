@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Nexus — a privacy-first social platform for creators and communities. Discover, create, connect, and grow.">
+<meta name="theme-color" content="#0B1120">
 <title>Nexus — Create. Connect. Grow. Earn.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://bcxjztejuuaepngxdulj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
@@ -296,6 +299,32 @@
   }
   @media (prefers-reduced-motion: reduce){
     .skeleton{animation:none;}
+    *{scroll-behavior:auto !important;}
+  }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible{
+    outline:2px solid var(--marigold);outline-offset:2px;
+  }
+  .skip-link{
+    position:absolute;left:-999px;top:0;background:var(--marigold);color:var(--ink);
+    padding:10px 16px;border-radius:0 0 8px 0;z-index:100;font-weight:600;text-decoration:none;
+  }
+  .skip-link:focus{left:0;}
+  .bottom-nav{
+    display:none;
+  }
+  @media (max-width:640px){
+    .bottom-nav{
+      display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;
+      background:rgba(11,17,32,0.95);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+      padding:6px 0 max(6px, env(safe-area-inset-bottom));
+    }
+    .bottom-nav button{
+      flex:1;background:none;border:none;color:var(--paper-dim);font-size:0.68rem;
+      display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;cursor:pointer;
+    }
+    .bottom-nav button.active{color:var(--marigold);}
+    .bottom-nav .icon{font-size:1.1rem;}
+    #view-app .profilewrap{padding-bottom:80px;}
   }
   @media (max-width:640px){
     .journey{flex-wrap:wrap;}
@@ -305,13 +334,17 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <header>
-  <div class="brand"><span class="dot"></span>Nexus</div>
-  <div class="navlinks" id="navlinks">
+  <div class="brand"><span class="dot" aria-hidden="true"></span>Nexus</div>
+  <nav class="navlinks" id="navlinks" aria-label="Account">
     <button class="btn" id="nav-login">Log in</button>
     <button class="btn btn-solid" id="nav-signup">Join free</button>
-  </div>
+  </nav>
 </header>
+
+<div id="main-content"></div>
 
 <!-- ============ LANDING ============ -->
 <main id="view-landing">
@@ -388,16 +421,24 @@
 
 <!-- ============ APP (logged-in shell) ============ -->
 <main id="view-app" class="hidden">
-  <div class="subnav">
-    <button class="tabbtn active" id="tab-btn-home" data-tab="home">Home</button>
-    <button class="tabbtn" id="tab-btn-communities" data-tab="communities">Communities</button>
-    <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube">YouTube</button>
-    <button class="tabbtn" id="tab-btn-earn" data-tab="earn">Earn</button>
-    <button class="tabbtn" id="tab-btn-messages" data-tab="messages">Messages</button>
-    <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications">Alerts<span id="notif-dot" class="notif-dot hidden"></span></button>
-    <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
-    <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
-  </div>
+  <nav class="subnav" role="tablist" aria-label="Main sections">
+    <button class="tabbtn active" id="tab-btn-home" data-tab="home" role="tab" aria-selected="true">Home</button>
+    <button class="tabbtn" id="tab-btn-communities" data-tab="communities" role="tab" aria-selected="false">Communities</button>
+    <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube" role="tab" aria-selected="false">YouTube</button>
+    <button class="tabbtn" id="tab-btn-earn" data-tab="earn" role="tab" aria-selected="false">Earn</button>
+    <button class="tabbtn" id="tab-btn-messages" data-tab="messages" role="tab" aria-selected="false">Messages</button>
+    <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications" role="tab" aria-selected="false">Alerts<span id="notif-dot" class="notif-dot hidden" aria-label="unread"></span></button>
+    <button class="tabbtn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false">Search</button>
+    <button class="tabbtn" id="tab-btn-profile" data-tab="profile" role="tab" aria-selected="false">Profile</button>
+  </nav>
+
+  <nav class="bottom-nav" aria-label="Quick navigation">
+    <button data-tab="home" class="active" aria-label="Home"><span class="icon" aria-hidden="true">🏠</span>Home</button>
+    <button data-tab="communities" aria-label="Communities"><span class="icon" aria-hidden="true">👥</span>Groups</button>
+    <button data-tab="search" aria-label="Search"><span class="icon" aria-hidden="true">🔍</span>Search</button>
+    <button data-tab="messages" aria-label="Messages"><span class="icon" aria-hidden="true">💬</span>Chat</button>
+    <button data-tab="profile" aria-label="Profile"><span class="icon" aria-hidden="true">👤</span>Profile</button>
+  </nav>
 
   <!-- ---- HOME / FEED TAB ---- -->
   <div id="tab-home" class="tabpanel profilewrap">
@@ -439,6 +480,9 @@
     </div>
     <div id="sponsored-slot"></div>
     <div id="feed-list"></div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn hidden" id="btn-load-more-feed">Load more</button>
+    </div>
   </div>
 
   <!-- ---- COMMUNITIES TAB ---- -->
@@ -711,7 +755,12 @@ let currentUser = null;
 function showTab(tab){
   ['home','communities','youtube','earn','messages','notifications','search','profile'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
-    $('tab-btn-' + t).classList.toggle('active', t === tab);
+    const btn = $('tab-btn-' + t);
+    btn.classList.toggle('active', t === tab);
+    btn.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+  });
+  document.querySelectorAll('.bottom-nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
   });
   if (tab === 'home') loadFeed();
   if (tab === 'profile') loadProfileTabOnly();
@@ -720,7 +769,7 @@ function showTab(tab){
   if (tab === 'earn') loadEarnCenter();
   if (tab === 'messages') openMessagesTab();
 }
-document.querySelectorAll('.tabbtn').forEach(b => {
+document.querySelectorAll('.tabbtn, .bottom-nav button').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
 });
 
@@ -738,7 +787,7 @@ function escapeHtml(str){
 
 function flash(slotId, text, kind){
   const slot = $(slotId);
-  slot.innerHTML = `<div class="msg ${kind === 'error' ? 'msg-error' : 'msg-ok'}">${text}</div>`;
+  slot.innerHTML = `<div class="msg ${kind === 'error' ? 'msg-error' : 'msg-ok'}" role="status" aria-live="polite">${text}</div>`;
 }
 function clearFlash(slotId){ $(slotId).innerHTML = ''; }
 
@@ -1037,25 +1086,22 @@ $('btn-add-poll-option').addEventListener('click', () => {
 });
 
 /* ============ FEED ============ */
+const FEED_PAGE_SIZE = 15;
+let feedOffset = 0;
+let feedBlockedIds = new Set();
+
 async function loadFeed(){
   show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
+  hide($('btn-load-more-feed'));
   populateComposerCommunities();
   loadSponsoredCard();
+  feedOffset = 0;
 
-  let blockedIds = new Set();
+  feedBlockedIds = new Set();
   if (currentUser){
     const { data: myBlocks } = await sb.from('blocks').select('blocked_id').eq('blocker_id', currentUser.id);
-    blockedIds = new Set((myBlocks || []).map(b => b.blocked_id));
+    feedBlockedIds = new Set((myBlocks || []).map(b => b.blocked_id));
   }
-
-  const { data: rawPosts, error } = await sb
-    .from('posts')
-    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
-    .eq('status', 'ACTIVE')
-    .is('community_id', null)
-    .order('created_at', { ascending: false })
-    .limit(30);
-  const posts = (rawPosts || []).filter(p => !blockedIds.has(p.author_id));
 
   const { data: rawPolls } = await sb
     .from('polls')
@@ -1064,21 +1110,37 @@ async function loadFeed(){
     .is('community_id', null)
     .order('created_at', { ascending: false })
     .limit(10);
-  const polls = (rawPolls || []).filter(p => !blockedIds.has(p.author_id));
-
-  hide($('feed-loading'));
-  if (error){ show($('feed-error')); return; }
-  if ((!posts || posts.length === 0) && (!polls || polls.length === 0)){ show($('feed-empty')); return; }
+  const polls = (rawPolls || []).filter(p => !feedBlockedIds.has(p.author_id));
 
   let myVotes = new Set();
   if (currentUser && polls && polls.length){
     const { data: votes } = await sb.from('poll_votes').select('poll_id').eq('user_id', currentUser.id).in('poll_id', polls.map(p => p.id));
     myVotes = new Set((votes || []).map(v => v.poll_id));
   }
+  const pollsHtml = polls.map(p => renderPoll(p, myVotes.has(p.id))).join('');
+  $('feed-list').innerHTML = pollsHtml;
+  polls.forEach(p => wirePollCard(p.id));
+
+  hide($('feed-loading'));
+  const gotAny = await fetchAndRenderPostsPage();
+  if (!gotAny && polls.length === 0 && $('feed-error').classList.contains('hidden')){ show($('feed-empty')); }
+}
+
+async function fetchAndRenderPostsPage(){
+  const { data: rawPosts, error } = await sb
+    .from('posts')
+    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('status', 'ACTIVE')
+    .is('community_id', null)
+    .order('created_at', { ascending: false })
+    .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
+
+  if (error){ show($('feed-error')); return false; }
+  const posts = (rawPosts || []).filter(p => !feedBlockedIds.has(p.author_id));
 
   let likedSet = new Set();
   let followingSet = new Set();
-  if (currentUser && posts && posts.length){
+  if (currentUser && posts.length){
     const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
     likedSet = new Set((myLikes || []).map(l => l.post_id));
     const authorIds = [...new Set(posts.map(p => p.author_id))];
@@ -1086,13 +1148,14 @@ async function loadFeed(){
     followingSet = new Set((myFollows || []).map(f => f.following_id));
   }
 
-  const pollsHtml = (polls || []).map(p => renderPoll(p, myVotes.has(p.id))).join('');
-  const postsHtml = (posts || []).map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join('');
-  $('feed-list').innerHTML = pollsHtml + postsHtml;
+  $('feed-list').insertAdjacentHTML('beforeend', posts.map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join(''));
+  posts.forEach(p => wirePostCard(p.id));
 
-  (polls || []).forEach(p => wirePollCard(p.id));
-  (posts || []).forEach(p => wirePostCard(p.id));
+  feedOffset += FEED_PAGE_SIZE;
+  $('btn-load-more-feed').classList.toggle('hidden', (rawPosts || []).length < FEED_PAGE_SIZE);
+  return posts.length > 0;
 }
+$('btn-load-more-feed').addEventListener('click', () => fetchAndRenderPostsPage());
 
 function renderPoll(poll, voted){
   const author = poll.profiles || {};
@@ -1152,9 +1215,9 @@ function renderPost(p, liked, following){
       </div>
       <div class="post-content">${escapeHtml(p.content)}</div>
       <div class="post-actions">
-        <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}">♥ <span class="like-count">${p.likes_count}</span></button>
-        <button class="comment-toggle">💬 <span class="comment-count">${p.comments_count}</span></button>
-        ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report">⚑ Report</button><button class="block-btn" title="Block">🚫 Block</button>` : ''}
+        <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}" aria-label="${liked ? 'Unlike' : 'Like'} this post">♥ <span class="like-count">${p.likes_count}</span></button>
+        <button class="comment-toggle" aria-label="Show comments">💬 <span class="comment-count">${p.comments_count}</span></button>
+        ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report" aria-label="Report this post">⚑ Report</button><button class="block-btn" title="Block" aria-label="Block this person">🚫 Block</button>` : ''}
       </div>
       <div class="comments-box hidden">
         <div class="comments-list"><div class="skeleton" style="width:60%"></div></div>

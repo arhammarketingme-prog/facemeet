@@ -223,13 +223,44 @@ Privacy Center, E2E messaging, and moderation. Run
   call this frontend intentionally doesn't make — that's flagged as a
   "contact support" step rather than faked.
 
-## What's not yet built
+## Phase 8 (now included — final phase)
 
-A full admin dashboard/review queue, and complete multilingual UI (English/
-Marathi/Hindi throughout) — these fall outside the 8 phases in the original
-roadmap's build order.
+Responsive, performance, and accessibility polish. No database changes —
+`index.html` only.
 
-## Next phase
+- **Accessibility**: a skip-to-content link, `role="tablist"`/`aria-selected`
+  on the main tabs, `aria-label`s on icon-only buttons (like, comment,
+  report, block), `aria-live` regions on inline success/error messages,
+  visible focus outlines (`:focus-visible`), and `prefers-reduced-motion`
+  is respected (skeleton shimmer and smooth-scroll both turn off).
+- **Mobile**: a fixed bottom navigation bar (Home / Groups / Search / Chat
+  / Profile) appears under 640px, matching the spec's mobile-first bottom
+  nav — the full tab bar remains as a horizontally-scrollable strip above
+  it for the tabs that don't fit.
+- **Performance**: the Home feed now paginates posts 15 at a time with a
+  "Load more" button instead of fetching 30 posts on every load — per spec
+  §37 ("do not load 1,000 demo profiles at once, paginate them"), applied
+  here to the real feed too.
+- Added `<meta name="description">`, `<meta name="theme-color">`, and a
+  `preconnect` hint to the Supabase project domain for a faster first
+  request.
 
-Phase 8 per the roadmap: responsive/performance polish, accessibility
-pass, and final deployment hardening.
+## Full acceptance check (spec §60)
+
+| Area | Status |
+|---|---|
+| Auth: signup/login/logout/reset | ✅ (reset via Supabase's built-in flow) |
+| Social: profile/follow/post/like/comment/save/share | ✅ except "save" (bookmarking) — not built |
+| Discovery: search/explore/trending/topics/YouTube | ✅ search + YouTube; no separate trending/topics view |
+| Communities: create/join/post/moderate | ✅ create/join/post; no per-community moderator tools yet |
+| Creator: channel/analytics/earnings | ✅ channel + Earn Center; no full Creator Studio analytics tabs |
+| Monetization: Earn Center/demo revenue/referral/ad slots/eligibility | ✅ |
+| Privacy: Privacy Center/data settings/deletion/E2E | ✅ |
+| Demo: 1,000 accounts/posts/communities/polls | ✅ accounts+posts+communities; demo polls not seeded |
+| Security: RLS/no service-role key/validation/report-block | ✅ |
+| Deployment: GitHub + static hosting + mobile responsive | ✅ |
+
+Not built, honestly: admin review dashboard, full multilingual UI (EN/MR/HI
+throughout), advertiser payment integration, bookmarking/"save", and a
+dedicated Creator Studio analytics view — these are natural next steps
+beyond the original 8-phase roadmap.
