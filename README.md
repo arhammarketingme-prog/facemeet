@@ -193,13 +193,43 @@ This is illustrative infrastructure — no real payment processor or ad
 network (Google Ad Manager, etc.) is connected. That's future work once
 the platform is ready for it, per spec §16.
 
+## Phase 7 (now included)
+
+Privacy Center, E2E messaging, and moderation. Run
+`supabase/schema_phase7.sql` **after** phases 1–4 and 6.
+
+- **Privacy Center** — a real page (footer link, or from Messages) with
+  plain-language sections on what's public, what's encrypted, what's not
+  stored, and what we don't claim ("legally certified," "100% anonymous" —
+  never, per spec §30).
+- **E2E messaging is functional**: each user gets an RSA-OAEP keypair
+  generated in the browser on first visit to Messages. Sending a message
+  generates a fresh AES-GCM key, encrypts the text with it, then wraps that
+  AES key twice with RSA (once for the recipient, once for the sender) so
+  both sides can read the conversation later. The server (`messages_metadata`)
+  only ever stores ciphertext.
+  - **Honest limitation, stated plainly in the Privacy Center**: the
+    private key lives in browser `localStorage`, not on the server. Switch
+    devices or clear browser data without exporting your key first, and
+    old messages become unreadable — there's no backend recovery, because
+    that's what "the server never sees plaintext" actually means.
+- **Moderation**: Report (with a reason) and Block buttons on every post.
+  Blocking removes that person's posts/polls from your feed and is checked
+  via RLS-backed tables (`blocks`, `reports`). There's no full admin review
+  queue yet — reports are visible via the Supabase dashboard for now.
+- **Your Data** (Profile tab): download a JSON export of your profile,
+  posts, and comments, or delete your public content outright. Full
+  account deletion (removing the `auth.users` row) needs a service-role
+  call this frontend intentionally doesn't make — that's flagged as a
+  "contact support" step rather than faked.
+
 ## What's not yet built
 
-E2E encrypted messaging, admin dashboard, moderation, multilingual UI —
-later phases per the roadmap.
+A full admin dashboard/review queue, and complete multilingual UI (English/
+Marathi/Hindi throughout) — these fall outside the 8 phases in the original
+roadmap's build order.
 
 ## Next phase
 
-Phase 7 per the roadmap: Privacy Center, E2E messaging architecture,
-security hardening, moderation (report/block/mute workflows and an
-admin review queue).
+Phase 8 per the roadmap: responsive/performance polish, accessibility
+pass, and final deployment hardening.

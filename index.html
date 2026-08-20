@@ -393,6 +393,7 @@
     <button class="tabbtn" id="tab-btn-communities" data-tab="communities">Communities</button>
     <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube">YouTube</button>
     <button class="tabbtn" id="tab-btn-earn" data-tab="earn">Earn</button>
+    <button class="tabbtn" id="tab-btn-messages" data-tab="messages">Messages</button>
     <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications">Alerts<span id="notif-dot" class="notif-dot hidden"></span></button>
     <button class="tabbtn" id="tab-btn-search" data-tab="search">Search</button>
     <button class="tabbtn" id="tab-btn-profile" data-tab="profile">Profile</button>
@@ -542,6 +543,31 @@
     </div>
   </div>
 
+  <!-- ---- MESSAGES TAB (E2E) ---- -->
+  <div id="tab-messages" class="tabpanel profilewrap hidden">
+    <p style="color:var(--paper-dim);font-size:0.82rem;margin-top:0">
+      Messages are end-to-end encrypted in your browser before they're sent — the server only ever stores ciphertext. See the <a href="#" id="msg-privacy-link" style="color:var(--teal)">Privacy Center</a> for details.
+    </p>
+
+    <div id="key-setup-notice" class="hidden msg msg-ok" style="margin-bottom:16px"></div>
+
+    <div id="msg-conversation-view" class="hidden">
+      <button class="btn" id="btn-back-messages">← Conversations</button>
+      <h3 id="conv-partner-name" style="margin:14px 0 10px"></h3>
+      <div id="conv-messages" style="max-height:400px;overflow-y:auto;margin-bottom:12px"></div>
+      <div class="comment-input-row">
+        <input type="text" id="msg-compose-input" placeholder="Type an encrypted message…">
+        <button class="btn btn-solid" id="btn-send-message">Send</button>
+      </div>
+    </div>
+
+    <div id="msg-conversations-list-wrap">
+      <div id="conversations-loading"><div class="skeleton" style="width:60%"></div></div>
+      <div id="conversations-empty" class="hidden"><p style="color:var(--paper-dim)">No conversations yet — message someone from Search.</p></div>
+      <div id="conversations-list"></div>
+    </div>
+  </div>
+
   <!-- ---- NOTIFICATIONS TAB ---- -->
   <div id="tab-notifications" class="tabpanel profilewrap hidden">
     <div id="notif-loading">
@@ -598,6 +624,14 @@
         <button class="btn btn-solid" id="btn-save">Save changes</button>
       </div>
 
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-top:0">Your Data</h3>
+        <p style="color:var(--paper-dim);font-size:0.85rem">Download a copy of your profile and posts, or permanently delete your public content.</p>
+        <button class="btn" id="btn-export-data">Download my data (JSON)</button>
+        <button class="btn" id="btn-delete-account" style="margin-left:8px;color:#fca5a5;border-color:rgba(239,68,68,0.4)">Delete my data</button>
+        <p id="delete-note" class="hidden" style="font-size:0.78rem;color:var(--paper-dim);margin-top:8px">This removes your profile, posts, and other content from Nexus. Your login (email) record itself needs to be removed by contacting support, since that step requires admin access we don't expose to the browser for security reasons.</p>
+      </div>
+
       <p style="margin-top:24px;text-align:center">
         <button class="btn" id="btn-logout">Log out</button>
       </p>
@@ -605,7 +639,42 @@
   </div>
 </main>
 
-<footer>Nexus — Phase 2 build. Demo mode, Earn Center, YouTube discovery and more arrive in later phases.</footer>
+<!-- ============ PRIVACY CENTER ============ -->
+<main id="view-privacy" class="hidden">
+  <div class="profilewrap" style="max-width:680px">
+    <button class="btn" id="btn-close-privacy">← Back</button>
+    <h2 style="margin-top:20px">Privacy Center</h2>
+    <p style="color:var(--paper-dim)">Plain-language answers about what Nexus stores, what's encrypted, and what's public.</p>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">What's public</h3>
+      <p style="font-size:0.9rem">Your profile (username, display name, bio, channel stats), your posts, comments, likes, follows, community memberships, and polls you create are all public by design — this is a public social platform.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">What's encrypted</h3>
+      <p style="font-size:0.9rem">Direct messages are encrypted in your browser (AES-GCM, with the key wrapped for each recipient using RSA-OAEP) before they ever leave your device. The server stores only ciphertext — Nexus staff cannot read your message contents.</p>
+      <p style="font-size:0.85rem;color:var(--paper-dim)">Honest limitation: your private key currently lives only in this browser's local storage. If you clear browser data or switch devices without backing it up, you'll lose access to old messages. There's no server-side password recovery for this, by design — that's what "the server never sees plaintext" means in practice.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">What's NOT stored</h3>
+      <p style="font-size:0.9rem">We don't store plaintext message contents, and we practice data minimization elsewhere too — no invasive location tracking, no third-party ad trackers embedded in the page.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">What we don't claim</h3>
+      <p style="font-size:0.9rem">Nexus is privacy-first, not a legal guarantee. We don't claim to be "legally certified," and we don't claim "100% anonymity" — your account is tied to your email, and public content is, well, public.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Your data</h3>
+      <p style="font-size:0.9rem">Manage account deletion and data export from the Profile tab → "Your Data" section.</p>
+    </div>
+  </div>
+</main>
+
+<footer>Nexus — Phase 7 build. Admin dashboard and full multilingual UI are the remaining roadmap items. <a href="#" id="footer-privacy-link" style="color:var(--teal)">Privacy Center</a></footer>
 
 <script>
 /* ------------------------------------------------------------
@@ -623,17 +692,24 @@ const $ = (id) => document.getElementById(id);
 const show = (el) => el.classList.remove('hidden');
 const hide = (el) => el.classList.add('hidden');
 
-function views(){ return { landing: $('view-landing'), auth: $('view-auth'), app: $('view-app') }; }
+function views(){ return { landing: $('view-landing'), auth: $('view-auth'), app: $('view-app'), privacy: $('view-privacy') }; }
+let viewBeforePrivacy = 'landing';
 function showView(name){
   const v = views();
   Object.keys(v).forEach(k => v[k].classList.toggle('hidden', k !== name));
 }
+function openPrivacyCenter(){
+  viewBeforePrivacy = document.getElementById('view-app').classList.contains('hidden') ? 'landing' : 'app';
+  showView('privacy');
+}
+document.getElementById('footer-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
+document.getElementById('btn-close-privacy').addEventListener('click', () => { showView(viewBeforePrivacy); });
 
 /* ---- app shell: tabs ---- */
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','youtube','earn','notifications','search','profile'].forEach(t => {
+  ['home','communities','youtube','earn','messages','notifications','search','profile'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     $('tab-btn-' + t).classList.toggle('active', t === tab);
   });
@@ -642,6 +718,7 @@ function showTab(tab){
   if (tab === 'communities') loadCommunities();
   if (tab === 'notifications') loadNotifications();
   if (tab === 'earn') loadEarnCenter();
+  if (tab === 'messages') openMessagesTab();
 }
 document.querySelectorAll('.tabbtn').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
@@ -797,6 +874,30 @@ $('btn-save').addEventListener('click', async () => {
   else { flash('save-msg-slot', 'Saved.', 'ok'); }
 });
 
+$('btn-export-data').addEventListener('click', async () => {
+  if (!currentUser) return;
+  const [{ data: profile }, { data: posts }, { data: comments }] = await Promise.all([
+    sb.from('profiles').select('*').eq('id', currentUser.id).single(),
+    sb.from('posts').select('*').eq('author_id', currentUser.id),
+    sb.from('comments').select('*').eq('author_id', currentUser.id)
+  ]);
+  const exportData = { profile, posts, comments, exported_at: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nexus-my-data.json';
+  a.click();
+});
+
+$('btn-delete-account').addEventListener('click', async () => {
+  show($('delete-note'));
+  if (!confirm('Delete your profile, posts, comments and other content? This cannot be undone.')) return;
+  const { error } = await sb.from('profiles').delete().eq('id', currentUser.id);
+  if (error){ alert('Could not delete — ' + error.message); return; }
+  await sb.auth.signOut();
+  showView('landing');
+});
+
 /* ============ COMMUNITIES ============ */
 let myCommunityIds = new Set();
 let currentCommunityId = null;
@@ -941,21 +1042,29 @@ async function loadFeed(){
   populateComposerCommunities();
   loadSponsoredCard();
 
-  const { data: posts, error } = await sb
+  let blockedIds = new Set();
+  if (currentUser){
+    const { data: myBlocks } = await sb.from('blocks').select('blocked_id').eq('blocker_id', currentUser.id);
+    blockedIds = new Set((myBlocks || []).map(b => b.blocked_id));
+  }
+
+  const { data: rawPosts, error } = await sb
     .from('posts')
     .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('status', 'ACTIVE')
     .is('community_id', null)
     .order('created_at', { ascending: false })
     .limit(30);
+  const posts = (rawPosts || []).filter(p => !blockedIds.has(p.author_id));
 
-  const { data: polls } = await sb
+  const { data: rawPolls } = await sb
     .from('polls')
     .select('id, question, created_at, author_id, profiles!polls_author_id_fkey(username, display_name), poll_options(id, option_text, votes_count)')
     .eq('status', 'ACTIVE')
     .is('community_id', null)
     .order('created_at', { ascending: false })
     .limit(10);
+  const polls = (rawPolls || []).filter(p => !blockedIds.has(p.author_id));
 
   hide($('feed-loading'));
   if (error){ show($('feed-error')); return; }
@@ -1032,7 +1141,7 @@ function renderPost(p, liked, following){
   const name = author.display_name || author.username || 'Unknown';
   const isSelf = currentUser && p.author_id === currentUser.id;
   return `
-    <div class="post" data-post-id="${p.id}">
+    <div class="post" data-post-id="${p.id}" data-author-id="${p.author_id}">
       <div class="post-head">
         <div class="post-avatar">${initials(name)}</div>
         <div>
@@ -1045,6 +1154,7 @@ function renderPost(p, liked, following){
       <div class="post-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}">♥ <span class="like-count">${p.likes_count}</span></button>
         <button class="comment-toggle">💬 <span class="comment-count">${p.comments_count}</span></button>
+        ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report">⚑ Report</button><button class="block-btn" title="Block">🚫 Block</button>` : ''}
       </div>
       <div class="comments-box hidden">
         <div class="comments-list"><div class="skeleton" style="width:60%"></div></div>
@@ -1118,6 +1228,25 @@ function wirePostCard(postId){
         countEl.textContent = parseInt(countEl.textContent) + 1;
         await loadComments(postId, card);
       }
+    });
+  }
+  const reportBtn = card.querySelector('.report-btn');
+  if (reportBtn){
+    reportBtn.addEventListener('click', async () => {
+      const reason = prompt('Why are you reporting this post?');
+      if (!reason || !reason.trim()) return;
+      const { error } = await sb.from('reports').insert({ reporter_id: currentUser.id, target_type: 'post', target_id: postId, reason: reason.trim() });
+      if (!error) alert('Thanks — this post has been reported for review.');
+    });
+  }
+
+  const blockBtn = card.querySelector('.block-btn');
+  if (blockBtn){
+    blockBtn.addEventListener('click', async () => {
+      const authorId = card.dataset.authorId;
+      if (!confirm('Block this person? You won\'t see their posts, and they won\'t be able to message you.')) return;
+      const { error } = await sb.from('blocks').insert({ blocker_id: currentUser.id, blocked_id: authorId });
+      if (!error){ card.remove(); }
     });
   }
 }
@@ -1204,7 +1333,8 @@ async function runSearch(){
     html += `<h3>People</h3>` + people.map(u => `
       <div class="search-result">
         <div class="post-avatar">${initials(u.display_name || u.username)}</div>
-        <div><div class="post-author">${escapeHtml(u.display_name || u.username)}</div><div class="post-meta">@${escapeHtml(u.username)}</div></div>
+        <div style="flex:1"><div class="post-author">${escapeHtml(u.display_name || u.username)}</div><div class="post-meta">@${escapeHtml(u.username)}</div></div>
+        ${currentUser && u.id !== currentUser.id ? `<button class="btn message-user-btn" data-user-id="${u.id}">Message</button>` : ''}
       </div>`).join('');
   }
   if (posts && posts.length){
@@ -1215,6 +1345,14 @@ async function runSearch(){
   }
   if (!html) html = `<p style="color:var(--paper-dim)">No results for "${escapeHtml(q)}".</p>`;
   $('search-results').innerHTML = html;
+
+  document.querySelectorAll('.message-user-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      showTab('messages');
+      await openMessagesTab();
+      if (myKeyHandle) openConversation(btn.dataset.userId);
+    });
+  });
 }
 
 /* ============ NOTIFICATIONS ============ */
@@ -1411,6 +1549,208 @@ async function loadMyCampaigns(advertiserId){
     </div>
   `).join('');
 }
+
+/* ============ E2E MESSAGING ============ */
+// RSA-OAEP for wrapping a per-message AES-GCM key. Private key
+// lives only in this browser's localStorage — the server never
+// sees it, and there is no server-side recovery (see Privacy Center).
+const PRIVKEY_STORAGE_PREFIX = 'nexus_privkey_';
+
+function ab2b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b642ab(b64){ const bin = atob(b64); const buf = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf.buffer; }
+
+async function ensureKeypair(){
+  if (!currentUser) return null;
+  const stored = localStorage.getItem(PRIVKEY_STORAGE_PREFIX + currentUser.id);
+  if (stored){
+    const jwk = JSON.parse(stored);
+    const privateKey = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['decrypt']);
+    return { privateKey };
+  }
+
+  // no local key yet — check if a public key already exists on the
+  // profile (meaning this is a new device) before silently overwriting it
+  const { data: profile } = await sb.from('profiles').select('public_key').eq('id', currentUser.id).single();
+  if (profile?.public_key){
+    show($('key-setup-notice'));
+    $('key-setup-notice').innerHTML = `This device doesn't have your encryption key yet. If you have a backup, paste it below. Otherwise, generating a new key means you won't be able to read messages sent to your old key.
+      <div class="field" style="margin-top:8px"><textarea id="key-import-input" placeholder="Paste your backed-up private key JSON here…"></textarea></div>
+      <button class="btn" id="btn-import-key">Import key</button>
+      <button class="btn" id="btn-regenerate-key">Generate a new key instead</button>`;
+    document.getElementById('btn-import-key').addEventListener('click', async () => {
+      try {
+        const jwk = JSON.parse(document.getElementById('key-import-input').value.trim());
+        localStorage.setItem(PRIVKEY_STORAGE_PREFIX + currentUser.id, JSON.stringify(jwk));
+        hide($('key-setup-notice'));
+        openMessagesTab();
+      } catch(e){ alert('That doesn\'t look like a valid key backup.'); }
+    });
+    document.getElementById('btn-regenerate-key').addEventListener('click', async () => {
+      await generateAndStoreKeypair();
+      hide($('key-setup-notice'));
+      openMessagesTab();
+    });
+    return null; // wait for the user's choice
+  }
+
+  return await generateAndStoreKeypair();
+}
+
+async function generateAndStoreKeypair(){
+  const keyPair = await crypto.subtle.generateKey(
+    { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1,0,1]), hash: 'SHA-256' },
+    true, ['encrypt','decrypt']
+  );
+  const privateJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+  const publicJwk = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
+  localStorage.setItem(PRIVKEY_STORAGE_PREFIX + currentUser.id, JSON.stringify(privateJwk));
+  await sb.from('profiles').update({ public_key: JSON.stringify(publicJwk) }).eq('id', currentUser.id);
+  return { privateKey: keyPair.privateKey };
+}
+
+async function importPublicKey(jwkJson){
+  const jwk = JSON.parse(jwkJson);
+  return await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['encrypt']);
+}
+
+async function encryptMessage(plaintext, recipientPublicKeyJwk, senderPublicKeyJwk){
+  const aesKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, enc.encode(plaintext));
+  const rawAesKey = await crypto.subtle.exportKey('raw', aesKey);
+
+  const recipientPub = await importPublicKey(recipientPublicKeyJwk);
+  const senderPub = await importPublicKey(senderPublicKeyJwk);
+  const keyForRecipient = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, recipientPub, rawAesKey);
+  const keyForSender = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, senderPub, rawAesKey);
+
+  return {
+    ciphertext: ab2b64(ciphertext),
+    iv: ab2b64(iv.buffer),
+    key_for_recipient: ab2b64(keyForRecipient),
+    key_for_sender: ab2b64(keyForSender)
+  };
+}
+
+async function decryptMessage(row, myPrivateKey, isSender){
+  try {
+    const wrappedKey = isSender ? row.key_for_sender : row.key_for_recipient;
+    const rawAesKey = await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, myPrivateKey, b642ab(wrappedKey));
+    const aesKey = await crypto.subtle.importKey('raw', rawAesKey, { name: 'AES-GCM' }, false, ['decrypt']);
+    const plaintextBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(b642ab(row.iv)) }, aesKey, b642ab(row.ciphertext));
+    return new TextDecoder().decode(plaintextBuf);
+  } catch(e){
+    return '[Could not decrypt — this message was likely sent to a different device key]';
+  }
+}
+
+let myKeyHandle = null;
+let currentConversationPartner = null;
+
+async function openMessagesTab(){
+  hide($('msg-conversation-view'));
+  show($('msg-conversations-list-wrap'));
+  hide($('key-setup-notice'));
+
+  const keyResult = await ensureKeypair();
+  if (!keyResult) return; // waiting on user's key import/regenerate choice
+  myKeyHandle = keyResult.privateKey;
+
+  await loadConversations();
+}
+
+async function loadConversations(){
+  show($('conversations-loading')); hide($('conversations-empty')); $('conversations-list').innerHTML = '';
+
+  const { data: rows, error } = await sb
+    .from('messages_metadata')
+    .select('sender_id, recipient_id, created_at, read_at, profiles!messages_metadata_sender_id_fkey(username, display_name), recipient:profiles!messages_metadata_recipient_id_fkey(username, display_name)')
+    .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  hide($('conversations-loading'));
+  if (error || !rows || rows.length === 0){ show($('conversations-empty')); return; }
+
+  const seen = new Map();
+  rows.forEach(r => {
+    const partnerId = r.sender_id === currentUser.id ? r.recipient_id : r.sender_id;
+    const partner = r.sender_id === currentUser.id ? r.recipient : r.profiles;
+    if (!seen.has(partnerId)) seen.set(partnerId, { partnerId, partner, lastAt: r.created_at });
+  });
+
+  $('conversations-list').innerHTML = [...seen.values()].map(c => `
+    <div class="search-result" data-partner-id="${c.partnerId}" style="cursor:pointer">
+      <div class="post-avatar">${initials(c.partner?.display_name || c.partner?.username || '?')}</div>
+      <div><div class="post-author">${escapeHtml(c.partner?.display_name || c.partner?.username || 'Unknown')}</div><div class="post-meta">${timeAgo(c.lastAt)}</div></div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('#conversations-list [data-partner-id]').forEach(el => {
+    el.addEventListener('click', () => openConversation(el.dataset.partnerId));
+  });
+}
+
+async function openConversation(partnerId){
+  currentConversationPartner = partnerId;
+  hide($('msg-conversations-list-wrap'));
+  show($('msg-conversation-view'));
+  $('conv-messages').innerHTML = `<div class="skeleton" style="width:50%"></div>`;
+
+  const { data: partnerProfile } = await sb.from('profiles').select('username, display_name').eq('id', partnerId).single();
+  $('conv-partner-name').textContent = partnerProfile?.display_name || partnerProfile?.username || 'Conversation';
+
+  const { data: rows, error } = await sb
+    .from('messages_metadata')
+    .select('*')
+    .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${currentUser.id})`)
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error || !rows){ $('conv-messages').innerHTML = `<p class="msg msg-error">Couldn't load messages.</p>`; return; }
+
+  const decrypted = await Promise.all(rows.map(async r => {
+    const isSender = r.sender_id === currentUser.id;
+    const text = await decryptMessage(r, myKeyHandle, isSender);
+    return { isSender, text, at: r.created_at };
+  }));
+
+  $('conv-messages').innerHTML = decrypted.map(m => `
+    <div style="text-align:${m.isSender ? 'right' : 'left'};margin-bottom:8px">
+      <span style="display:inline-block;background:${m.isSender ? 'var(--marigold)' : 'var(--ink)'};color:${m.isSender ? 'var(--ink)' : 'var(--paper)'};padding:8px 12px;border-radius:12px;max-width:80%;font-size:0.88rem">${escapeHtml(m.text)}</span>
+      <div class="post-meta">${timeAgo(m.at)}</div>
+    </div>
+  `).join('') || `<p style="color:var(--paper-dim);font-size:0.85rem">Say hello 👋</p>`;
+
+  $('conv-messages').scrollTop = $('conv-messages').scrollHeight;
+}
+
+$('btn-back-messages').addEventListener('click', () => { currentConversationPartner = null; loadConversations(); hide($('msg-conversation-view')); show($('msg-conversations-list-wrap')); });
+
+$('btn-send-message').addEventListener('click', async () => {
+  if (!currentConversationPartner || !myKeyHandle) return;
+  const input = $('msg-compose-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const { data: recipientProfile } = await sb.from('profiles').select('public_key').eq('id', currentConversationPartner).single();
+  const { data: myProfile } = await sb.from('profiles').select('public_key').eq('id', currentUser.id).single();
+  if (!recipientProfile?.public_key){
+    alert('This person hasn\'t set up messaging yet.'); return;
+  }
+
+  const btn = $('btn-send-message'); btn.disabled = true;
+  const enc = await encryptMessage(text, recipientProfile.public_key, myProfile.public_key);
+  const { error } = await sb.from('messages_metadata').insert({
+    sender_id: currentUser.id, recipient_id: currentConversationPartner, ...enc
+  });
+  btn.disabled = false;
+
+  if (!error){ input.value = ''; await openConversation(currentConversationPartner); }
+});
+
+document.getElementById('msg-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
 
 /* ============ YOUTUBE DISCOVERY ============ */
 async function runYoutubeSearch(){
