@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://bcxjztejuuaepngxdulj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
   :root{
     --ink:#0B1120;
@@ -340,8 +341,13 @@
 <header>
   <div class="brand"><span class="dot" aria-hidden="true"></span>Nexus</div>
   <nav class="navlinks" id="navlinks" aria-label="Account">
-    <button class="btn" id="nav-login">Log in</button>
-    <button class="btn btn-solid" id="nav-signup">Join free</button>
+    <select id="lang-switcher" class="btn" style="padding:9px 8px" aria-label="Language">
+      <option value="en">EN</option>
+      <option value="mr">मराठी</option>
+      <option value="hi">हिंदी</option>
+    </select>
+    <button class="btn" id="nav-login" data-i18n="btn_login">Log in</button>
+    <button class="btn btn-solid" id="nav-signup" data-i18n="btn_join_free">Join free</button>
   </nav>
 </header>
 
@@ -350,19 +356,19 @@
 <!-- ============ LANDING ============ -->
 <main id="view-landing">
   <div class="hero">
-    <span class="eyebrow">Privacy-first · Built for creators</span>
-    <h1>Create. Connect.<br>Grow. Earn.</h1>
-    <p>A privacy-first social platform for creators and communities — with data minimization built in, not bolted on.</p>
+    <span class="eyebrow" data-i18n="hero_eyebrow">Privacy-first · Built for creators</span>
+    <h1 data-i18n="hero_title">Create. Connect.<br>Grow. Earn.</h1>
+    <p data-i18n="hero_subtitle">A privacy-first social platform for creators and communities — with data minimization built in, not bolted on.</p>
     <div class="hero-ctas">
-      <button class="btn btn-solid" id="hero-join">Join free</button>
-      <button class="btn" id="hero-demo">Explore demo</button>
+      <button class="btn btn-solid" id="hero-join" data-i18n="btn_join_free">Join free</button>
+      <button class="btn" id="hero-demo" data-i18n="btn_explore_demo">Explore demo</button>
     </div>
     <div class="journey">
-      <div class="journey-step"><span class="n">01</span>Discover</div>
-      <div class="journey-step"><span class="n">02</span>Create</div>
-      <div class="journey-step"><span class="n">03</span>Connect</div>
-      <div class="journey-step"><span class="n">04</span>Grow</div>
-      <div class="journey-step"><span class="n">05</span>Earn</div>
+      <div class="journey-step"><span class="n">01</span><span data-i18n="journey_discover">Discover</span></div>
+      <div class="journey-step"><span class="n">02</span><span data-i18n="journey_create">Create</span></div>
+      <div class="journey-step"><span class="n">03</span><span data-i18n="journey_connect">Connect</span></div>
+      <div class="journey-step"><span class="n">04</span><span data-i18n="journey_grow">Grow</span></div>
+      <div class="journey-step"><span class="n">05</span><span data-i18n="journey_earn">Earn</span></div>
     </div>
   </div>
 
@@ -404,22 +410,22 @@
 
     <!-- LOGIN -->
     <div id="form-login">
-      <h2 style="margin-top:0">Log in</h2>
-      <div class="field"><label for="li-email">Email</label><input id="li-email" type="email" autocomplete="email"></div>
-      <div class="field"><label for="li-pass">Password</label><input id="li-pass" type="password" autocomplete="current-password"></div>
-      <button class="btn btn-solid" id="btn-login" style="width:100%">Log in</button>
-      <div class="switcher">New here? <button id="to-signup">Create an account</button></div>
+      <h2 style="margin-top:0" data-i18n="auth_login_title">Log in</h2>
+      <div class="field"><label for="li-email" data-i18n="field_email">Email</label><input id="li-email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="li-pass" data-i18n="field_password">Password</label><input id="li-pass" type="password" autocomplete="current-password"></div>
+      <button class="btn btn-solid" id="btn-login" style="width:100%" data-i18n="btn_login">Log in</button>
+      <div class="switcher"><span data-i18n="auth_new_here">New here?</span> <button id="to-signup" data-i18n="auth_create_account">Create an account</button></div>
     </div>
 
     <!-- SIGNUP -->
     <div id="form-signup" class="hidden">
-      <h2 style="margin-top:0">Join free</h2>
-      <div class="field"><label for="su-name">Display name</label><input id="su-name" type="text" autocomplete="name"></div>
-      <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email"></div>
-      <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="6"></div>
-      <div class="field"><label for="su-referral">Referral code (optional)</label><input id="su-referral" type="text" placeholder="e.g. NEX-ABC123"></div>
-      <button class="btn btn-solid" id="btn-signup" style="width:100%">Create account</button>
-      <div class="switcher">Already have an account? <button id="to-login">Log in</button></div>
+      <h2 style="margin-top:0" data-i18n="btn_join_free">Join free</h2>
+      <div class="field"><label for="su-name" data-i18n="field_display_name">Display name</label><input id="su-name" type="text" autocomplete="name"></div>
+      <div class="field"><label for="su-email" data-i18n="field_email">Email</label><input id="su-email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="su-pass" data-i18n="field_password">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="6"></div>
+      <div class="field"><label for="su-referral" data-i18n="field_referral">Referral code (optional)</label><input id="su-referral" type="text" placeholder="e.g. NEX-ABC123"></div>
+      <button class="btn btn-solid" id="btn-signup" style="width:100%" data-i18n="auth_create_account_btn">Create account</button>
+      <div class="switcher"><span data-i18n="auth_have_account">Already have an account?</span> <button id="to-login" data-i18n="btn_login">Log in</button></div>
     </div>
   </div>
 </main>
@@ -427,34 +433,35 @@
 <!-- ============ APP (logged-in shell) ============ -->
 <main id="view-app" class="hidden">
   <nav class="subnav" role="tablist" aria-label="Main sections">
-    <button class="tabbtn active" id="tab-btn-home" data-tab="home" role="tab" aria-selected="true">Home</button>
-    <button class="tabbtn" id="tab-btn-communities" data-tab="communities" role="tab" aria-selected="false">Communities</button>
-    <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube" role="tab" aria-selected="false">YouTube</button>
-    <button class="tabbtn" id="tab-btn-earn" data-tab="earn" role="tab" aria-selected="false">Earn</button>
-    <button class="tabbtn" id="tab-btn-messages" data-tab="messages" role="tab" aria-selected="false">Messages</button>
-    <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications" role="tab" aria-selected="false">Alerts<span id="notif-dot" class="notif-dot hidden" aria-label="unread"></span></button>
-    <button class="tabbtn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false">Search</button>
-    <button class="tabbtn" id="tab-btn-profile" data-tab="profile" role="tab" aria-selected="false">Profile</button>
+    <button class="tabbtn active" id="tab-btn-home" data-tab="home" role="tab" aria-selected="true" data-i18n="nav_home">Home</button>
+    <button class="tabbtn" id="tab-btn-communities" data-tab="communities" role="tab" aria-selected="false" data-i18n="nav_communities">Communities</button>
+    <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube" role="tab" aria-selected="false" data-i18n="nav_youtube">YouTube</button>
+    <button class="tabbtn" id="tab-btn-earn" data-tab="earn" role="tab" aria-selected="false" data-i18n="nav_earn">Earn</button>
+    <button class="tabbtn" id="tab-btn-messages" data-tab="messages" role="tab" aria-selected="false" data-i18n="nav_messages">Messages</button>
+    <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications" role="tab" aria-selected="false"><span data-i18n="nav_alerts">Alerts</span><span id="notif-dot" class="notif-dot hidden" aria-label="unread"></span></button>
+    <button class="tabbtn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="nav_search">Search</button>
+    <button class="tabbtn" id="tab-btn-profile" data-tab="profile" role="tab" aria-selected="false" data-i18n="nav_profile">Profile</button>
+    <button class="tabbtn hidden" id="tab-btn-admin" data-tab="admin" role="tab" aria-selected="false" data-i18n="nav_admin">Admin</button>
   </nav>
 
   <nav class="bottom-nav" aria-label="Quick navigation">
-    <button data-tab="home" class="active" aria-label="Home"><span class="icon" aria-hidden="true">🏠</span>Home</button>
-    <button data-tab="communities" aria-label="Communities"><span class="icon" aria-hidden="true">👥</span>Groups</button>
-    <button data-tab="search" aria-label="Search"><span class="icon" aria-hidden="true">🔍</span>Search</button>
-    <button data-tab="messages" aria-label="Messages"><span class="icon" aria-hidden="true">💬</span>Chat</button>
-    <button data-tab="profile" aria-label="Profile"><span class="icon" aria-hidden="true">👤</span>Profile</button>
+    <button data-tab="home" class="active" aria-label="Home"><span class="icon" aria-hidden="true">🏠</span><span data-i18n="nav_home">Home</span></button>
+    <button data-tab="communities" aria-label="Communities"><span class="icon" aria-hidden="true">👥</span><span data-i18n="nav_groups">Groups</span></button>
+    <button data-tab="search" aria-label="Search"><span class="icon" aria-hidden="true">🔍</span><span data-i18n="nav_search">Search</span></button>
+    <button data-tab="messages" aria-label="Messages"><span class="icon" aria-hidden="true">💬</span><span data-i18n="nav_chat">Chat</span></button>
+    <button data-tab="profile" aria-label="Profile"><span class="icon" aria-hidden="true">👤</span><span data-i18n="nav_profile">Profile</span></button>
   </nav>
 
   <!-- ---- HOME / FEED TAB ---- -->
   <div id="tab-home" class="tabpanel profilewrap">
     <div class="card" style="margin-bottom:20px">
       <div class="field" style="margin-bottom:12px">
-        <label for="composer-community">Post to</label>
+        <label for="composer-community" data-i18n="label_post_to">Post to</label>
         <select id="composer-community"><option value="">My Feed</option></select>
       </div>
 
       <div id="composer-mode-post">
-        <textarea id="composer-text" placeholder="What's on your mind?" maxlength="2000"></textarea>
+        <textarea id="composer-text" placeholder="What's on your mind?" data-i18n-placeholder="placeholder_whats_on_mind" maxlength="2000"></textarea>
       </div>
       <div id="composer-mode-poll" class="hidden">
         <div class="field"><input type="text" id="poll-question" placeholder="Ask a question…" maxlength="300"></div>
@@ -468,7 +475,7 @@
       <div id="composer-msg-slot"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
         <button class="btn" id="btn-toggle-poll" type="button">📊 Poll</button>
-        <button class="btn btn-solid" id="btn-post">Post</button>
+        <button class="btn btn-solid" id="btn-post" data-i18n="btn_post">Post</button>
       </div>
     </div>
 
@@ -497,11 +504,11 @@
   <!-- ---- COMMUNITIES TAB ---- -->
   <div id="tab-communities" class="tabpanel profilewrap hidden">
     <div class="card" style="margin-bottom:20px">
-      <h3 style="margin-top:0">Start a community</h3>
+      <h3 style="margin-top:0" data-i18n="heading_start_community">Start a community</h3>
       <div class="field"><input type="text" id="new-community-name" placeholder="Community name" maxlength="80"></div>
       <div class="field"><textarea id="new-community-desc" placeholder="What's it about?"></textarea></div>
       <div id="community-create-msg-slot"></div>
-      <button class="btn btn-solid" id="btn-create-community">Create community</button>
+      <button class="btn btn-solid" id="btn-create-community" data-i18n="btn_create_community">Create community</button>
     </div>
 
     <div id="communities-loading">
@@ -577,8 +584,14 @@
     </div>
 
     <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Creator Studio — Engagement (last 14 days)</h3>
+      <canvas id="engagement-chart" width="600" height="180" style="width:100%;height:180px"></canvas>
+      <p id="engagement-chart-empty" class="hidden" style="color:var(--paper-dim);font-size:0.85rem">No engagement yet — likes and comments on your posts will show up here.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
       <h3 style="margin-top:0">Advertising — Demo Marketplace</h3>
-      <p style="color:var(--paper-dim);font-size:0.82rem">Illustrative campaign infrastructure — no real payment processing is connected yet.</p>
+      <p style="color:var(--paper-dim);font-size:0.82rem">Fund a campaign's budget with a real payment via Razorpay below (needs the project's Razorpay keys configured — see README).</p>
       <div id="advertiser-setup">
         <div class="field"><input type="text" id="advertiser-company" placeholder="Company / brand name"></div>
         <button class="btn" id="btn-become-advertiser">Register as advertiser</button>
@@ -593,6 +606,23 @@
         <button class="btn btn-solid" id="btn-create-campaign">Launch demo campaign</button>
       </div>
       <div id="my-campaigns" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <!-- ---- ADMIN TAB ---- -->
+  <div id="tab-admin" class="tabpanel profilewrap hidden">
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Platform Metrics</h3>
+      <div class="stats" id="admin-metrics">
+        <div class="stat"><div class="val" id="am-users">—</div><div class="lbl">Users</div></div>
+        <div class="stat"><div class="val" id="am-posts">—</div><div class="lbl">Posts</div></div>
+        <div class="stat"><div class="val" id="am-communities">—</div><div class="lbl">Communities</div></div>
+        <div class="stat"><div class="val" id="am-reports">—</div><div class="lbl">Open reports</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Moderation Queue</h3>
+      <div id="admin-reports-list"><div class="skeleton" style="width:60%"></div></div>
     </div>
   </div>
 
@@ -638,7 +668,7 @@
 
   <!-- ---- SEARCH TAB ---- -->
   <div id="tab-search" class="tabpanel profilewrap hidden">
-    <div class="field"><input id="search-input" type="text" placeholder="Search people or posts…"></div>
+    <div class="field"><input id="search-input" type="text" placeholder="Search people or posts…" data-i18n-placeholder="placeholder_search"></div>
     <div id="search-empty"><p style="color:var(--paper-dim)">Search for creators or posts.</p></div>
     <div id="search-results"></div>
   </div>
@@ -669,12 +699,12 @@
       </div>
 
       <div class="card">
-        <h3 style="margin-top:0">My Channel</h3>
+        <h3 style="margin-top:0" data-i18n="heading_my_channel">My Channel</h3>
         <div class="field"><label for="p-channel">Channel name</label><input id="p-channel" type="text"></div>
         <div class="field"><label for="p-bio">Bio</label><textarea id="p-bio"></textarea></div>
         <div class="field"><label for="p-referral">Your referral code</label><input id="p-referral" type="text" readonly></div>
         <div id="save-msg-slot"></div>
-        <button class="btn btn-solid" id="btn-save">Save changes</button>
+        <button class="btn btn-solid" id="btn-save" data-i18n="btn_save_changes">Save changes</button>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -691,7 +721,7 @@
       </div>
 
       <p style="margin-top:24px;text-align:center">
-        <button class="btn" id="btn-logout">Log out</button>
+        <button class="btn" id="btn-logout" data-i18n="btn_logout">Log out</button>
       </p>
     </div>
   </div>
@@ -747,6 +777,92 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
+
+/* ============ i18n (EN / मराठी / हिंदी) ============
+   Covers primary navigation, landing, auth, and the most common
+   actions across tabs. Dynamic/user-generated content (posts,
+   comments, names) is never translated — only interface chrome. */
+const translations = {
+  en: {
+    nav_home: 'Home', nav_communities: 'Communities', nav_youtube: 'YouTube', nav_earn: 'Earn',
+    nav_messages: 'Messages', nav_alerts: 'Alerts', nav_search: 'Search', nav_profile: 'Profile', nav_admin: 'Admin',
+    nav_groups: 'Groups', nav_chat: 'Chat',
+    hero_eyebrow: 'Privacy-first · Built for creators',
+    hero_title: 'Create. Connect.<br>Grow. Earn.',
+    hero_subtitle: 'A privacy-first social platform for creators and communities — with data minimization built in, not bolted on.',
+    btn_join_free: 'Join free', btn_explore_demo: 'Explore demo', btn_login: 'Log in',
+    journey_discover: 'Discover', journey_create: 'Create', journey_connect: 'Connect', journey_grow: 'Grow', journey_earn: 'Earn',
+    auth_login_title: 'Log in', field_email: 'Email', field_password: 'Password',
+    auth_new_here: 'New here?', auth_create_account: 'Create an account',
+    field_display_name: 'Display name', field_referral: 'Referral code (optional)',
+    auth_create_account_btn: 'Create account', auth_have_account: 'Already have an account?',
+    label_post_to: 'Post to', placeholder_whats_on_mind: "What's on your mind?", btn_post: 'Post',
+    heading_start_community: 'Start a community', btn_create_community: 'Create community',
+    placeholder_search: 'Search people or posts…',
+    heading_my_channel: 'My Channel', btn_save_changes: 'Save changes', btn_logout: 'Log out'
+  },
+  mr: {
+    nav_home: 'होम', nav_communities: 'समुदाय', nav_youtube: 'YouTube', nav_earn: 'कमाई',
+    nav_messages: 'मेसेजेस', nav_alerts: 'सूचना', nav_search: 'शोध', nav_profile: 'प्रोफाइल', nav_admin: 'ॲडमिन',
+    nav_groups: 'गट', nav_chat: 'चॅट',
+    hero_eyebrow: 'प्रायव्हसी-फर्स्ट · क्रिएटर्ससाठी',
+    hero_title: 'तयार करा. जोडा.<br>वाढा. कमवा.',
+    hero_subtitle: 'क्रिएटर्स आणि समुदायांसाठी प्रायव्हसी-फर्स्ट सोशल प्लॅटफॉर्म — डेटा मिनिमायझेशन सुरुवातीपासूनच.',
+    btn_join_free: 'मोफत जॉईन करा', btn_explore_demo: 'डेमो पाहा', btn_login: 'लॉग इन',
+    journey_discover: 'शोधा', journey_create: 'तयार करा', journey_connect: 'जोडा', journey_grow: 'वाढा', journey_earn: 'कमवा',
+    auth_login_title: 'लॉग इन', field_email: 'ईमेल', field_password: 'पासवर्ड',
+    auth_new_here: 'नवीन आहात?', auth_create_account: 'अकाउंट तयार करा',
+    field_display_name: 'डिस्प्ले नाव', field_referral: 'रेफरल कोड (ऐच्छिक)',
+    auth_create_account_btn: 'अकाउंट तयार करा', auth_have_account: 'आधीच अकाउंट आहे?',
+    label_post_to: 'कुठे पोस्ट करायचं', placeholder_whats_on_mind: 'तुमच्या मनात काय आहे?', btn_post: 'पोस्ट करा',
+    heading_start_community: 'नवीन समुदाय सुरू करा', btn_create_community: 'समुदाय तयार करा',
+    placeholder_search: 'लोक किंवा पोस्ट शोधा…',
+    heading_my_channel: 'माझं चॅनेल', btn_save_changes: 'बदल जतन करा', btn_logout: 'लॉग आउट'
+  },
+  hi: {
+    nav_home: 'होम', nav_communities: 'समुदाय', nav_youtube: 'YouTube', nav_earn: 'कमाई',
+    nav_messages: 'मैसेज', nav_alerts: 'सूचनाएं', nav_search: 'खोजें', nav_profile: 'प्रोफ़ाइल', nav_admin: 'एडमिन',
+    nav_groups: 'ग्रुप्स', nav_chat: 'चैट',
+    hero_eyebrow: 'प्राइवेसी-फर्स्ट · क्रिएटर्स के लिए',
+    hero_title: 'बनाएं. जुड़ें.<br>बढ़ें. कमाएं.',
+    hero_subtitle: 'क्रिएटर्स और समुदायों के लिए प्राइवेसी-फर्स्ट सोशल प्लेटफ़ॉर्म — शुरुआत से ही डेटा मिनिमाइज़ेशन.',
+    btn_join_free: 'मुफ़्त जॉइन करें', btn_explore_demo: 'डेमो देखें', btn_login: 'लॉग इन',
+    journey_discover: 'खोजें', journey_create: 'बनाएं', journey_connect: 'जुड़ें', journey_grow: 'बढ़ें', journey_earn: 'कमाएं',
+    auth_login_title: 'लॉग इन', field_email: 'ईमेल', field_password: 'पासवर्ड',
+    auth_new_here: 'नए हैं?', auth_create_account: 'खाता बनाएं',
+    field_display_name: 'डिस्प्ले नाम', field_referral: 'रेफ़रल कोड (वैकल्पिक)',
+    auth_create_account_btn: 'खाता बनाएं', auth_have_account: 'पहले से खाता है?',
+    label_post_to: 'कहाँ पोस्ट करें', placeholder_whats_on_mind: 'आपके मन में क्या है?', btn_post: 'पोस्ट करें',
+    heading_start_community: 'नया समुदाय शुरू करें', btn_create_community: 'समुदाय बनाएं',
+    placeholder_search: 'लोग या पोस्ट खोजें…',
+    heading_my_channel: 'मेरा चैनल', btn_save_changes: 'बदलाव सहेजें', btn_logout: 'लॉग आउट'
+  }
+};
+
+function applyLanguage(lang){
+  const dict = translations[lang] || translations.en;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.innerHTML = dict[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
+  localStorage.setItem('nexus_lang', lang);
+  document.documentElement.lang = lang;
+}
+
+const savedLang = localStorage.getItem('nexus_lang') || 'en';
+$('lang-switcher').value = savedLang;
+applyLanguage(savedLang);
+document.getElementById('lang-switcher')?.addEventListener('change', async (e) => {
+  applyLanguage(e.target.value);
+  if (currentUser){
+    await sb.from('profiles').update({ language: e.target.value }).eq('id', currentUser.id);
+  }
+});
+
 const show = (el) => el.classList.remove('hidden');
 const hide = (el) => el.classList.add('hidden');
 
@@ -767,7 +883,7 @@ document.getElementById('btn-close-privacy').addEventListener('click', () => { s
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','youtube','earn','messages','notifications','search','profile'].forEach(t => {
+  ['home','communities','youtube','earn','messages','notifications','search','profile','admin'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     const btn = $('tab-btn-' + t);
     btn.classList.toggle('active', t === tab);
@@ -782,6 +898,7 @@ function showTab(tab){
   if (tab === 'notifications') loadNotifications();
   if (tab === 'earn') loadEarnCenter();
   if (tab === 'messages') openMessagesTab();
+  if (tab === 'admin') loadAdminTab();
 }
 document.querySelectorAll('.tabbtn, .bottom-nav button').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
@@ -882,6 +999,7 @@ $('btn-logout').addEventListener('click', async () => {
 
 /* ---- entry point after login/signup: show app shell on Home tab ---- */
 let notifPollHandle = null;
+let currentUserIsAdmin = false;
 async function loadProfile(){
   const { data: { user } } = await sb.auth.getUser();
   currentUser = user || null;
@@ -890,6 +1008,11 @@ async function loadProfile(){
   checkUnreadNotifDot();
   if (!notifPollHandle){
     notifPollHandle = setInterval(checkUnreadNotifDot, 25000);
+  }
+  if (currentUser){
+    const { data: adminCheck } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
+    currentUserIsAdmin = !!adminCheck?.is_admin;
+    $('tab-btn-admin').classList.toggle('hidden', !currentUserIsAdmin);
   }
   await loadProfileTabOnly();
 }
@@ -1631,7 +1754,69 @@ async function loadEarnCenter(){
     <div class="elig-row"><span>Minimum payout threshold</span><span>₹${settings.MINIMUM_PAYOUT_INR || '—'}</span></div>
   `;
 
+  await drawEngagementChart();
   await loadAdvertiserPanel();
+}
+
+async function drawEngagementChart(){
+  const canvas = $('engagement-chart');
+  const ctx = canvas.getContext('2d');
+  const days = 14;
+  const dayBuckets = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--){
+    const d = new Date(now); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
+    dayBuckets.push({ date: d, count: 0 });
+  }
+  const since = dayBuckets[0].date.toISOString();
+
+  const { data: myPosts } = await sb.from('posts').select('id').eq('author_id', currentUser.id);
+  const postIds = (myPosts || []).map(p => p.id);
+
+  let events = [];
+  if (postIds.length){
+    const [{ data: likeEvents }, { data: commentEvents }] = await Promise.all([
+      sb.from('likes').select('created_at').in('post_id', postIds).gte('created_at', since),
+      sb.from('comments').select('created_at').in('post_id', postIds).gte('created_at', since)
+    ]);
+    events = [...(likeEvents || []), ...(commentEvents || [])];
+  }
+
+  events.forEach(e => {
+    const d = new Date(e.created_at); d.setHours(0,0,0,0);
+    const bucket = dayBuckets.find(b => b.date.getTime() === d.getTime());
+    if (bucket) bucket.count++;
+  });
+
+  const total = dayBuckets.reduce((s,b) => s + b.count, 0);
+  if (total === 0){
+    canvas.classList.add('hidden');
+    show($('engagement-chart-empty'));
+    return;
+  }
+  canvas.classList.remove('hidden');
+  hide($('engagement-chart-empty'));
+
+  // draw
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = 180;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const max = Math.max(...dayBuckets.map(b => b.count), 1);
+  const barW = w / days;
+  dayBuckets.forEach((b, i) => {
+    const barH = (b.count / max) * (h - 30);
+    ctx.fillStyle = '#F5A623';
+    ctx.fillRect(i * barW + 3, h - 20 - barH, barW - 6, barH);
+    ctx.fillStyle = '#c9c7bf';
+    ctx.font = '9px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    if (i % 2 === 0){
+      ctx.fillText(b.date.getDate() + '/' + (b.date.getMonth()+1), i * barW + barW/2, h - 6);
+    }
+  });
 }
 
 async function loadAdvertiserPanel(){
@@ -1690,11 +1875,70 @@ async function loadMyCampaigns(advertiserId){
   const { data: campaigns } = await sb.from('ad_campaigns').select('*').eq('advertiser_id', advertiserId).order('created_at', { ascending: false });
   if (!campaigns || campaigns.length === 0){ $('my-campaigns').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No campaigns yet.</p>`; return; }
   $('my-campaigns').innerHTML = campaigns.map(c => `
-    <div class="campaign-row">
+    <div class="campaign-row" data-campaign-id="${c.id}">
       <strong>${escapeHtml(c.name)}</strong> — ${escapeHtml(c.status)}<br>
-      <span style="color:var(--paper-dim)">${c.impressions_count} impressions · ${c.clicks_count} clicks · ₹${c.budget_inr} budget</span>
+      <span style="color:var(--paper-dim)">${c.impressions_count} impressions · ${c.clicks_count} clicks · ₹${c.budget_inr} funded</span><br>
+      <button class="btn fund-campaign-btn" style="margin-top:6px">Fund with Razorpay</button>
+      <span class="fund-msg" style="font-size:0.78rem;margin-left:8px"></span>
     </div>
   `).join('');
+
+  document.querySelectorAll('.fund-campaign-btn').forEach(btn => {
+    btn.addEventListener('click', () => fundCampaign(btn.closest('.campaign-row').dataset.campaignId, btn));
+  });
+}
+
+async function fundCampaign(campaignId, btn){
+  const amountStr = prompt('How much would you like to add to this campaign\'s budget (₹)?');
+  const amountInr = parseInt(amountStr);
+  if (!amountInr || amountInr < 1) return;
+
+  const msgEl = btn.nextElementSibling;
+  msgEl.textContent = 'Starting payment…';
+  btn.disabled = true;
+
+  const { data: orderData, error: orderErr } = await sb.functions.invoke('create-razorpay-order', { body: { campaignId, amountInr } });
+  btn.disabled = false;
+
+  if (orderErr || !orderData || orderData.error || !orderData.orderId){
+    msgEl.textContent = orderData?.error === 'payments_not_configured'
+      ? 'Payments aren\'t set up yet on this project.'
+      : 'Could not start payment — try again later.';
+    return;
+  }
+
+  if (typeof Razorpay === 'undefined'){
+    msgEl.textContent = 'Payment widget failed to load.';
+    return;
+  }
+
+  const rzp = new Razorpay({
+    key: orderData.keyId,
+    amount: orderData.amount,
+    currency: orderData.currency,
+    order_id: orderData.orderId,
+    name: 'Nexus Ad Campaign',
+    description: 'Fund your demo ad campaign',
+    handler: async function(response){
+      msgEl.textContent = 'Verifying…';
+      const { data: verifyData } = await sb.functions.invoke('verify-razorpay-payment', {
+        body: {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          campaignId, amountInr
+        }
+      });
+      if (verifyData?.verified){
+        msgEl.textContent = 'Payment verified — budget updated.';
+        await loadMyCampaigns((await sb.from('advertisers').select('id').eq('user_id', currentUser.id).single()).data.id);
+      } else {
+        msgEl.textContent = 'Payment could not be verified.';
+      }
+    },
+    theme: { color: '#F5A623' }
+  });
+  rzp.open();
 }
 
 /* ============ E2E MESSAGING ============ */
@@ -1898,6 +2142,69 @@ $('btn-send-message').addEventListener('click', async () => {
 });
 
 document.getElementById('msg-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
+
+/* ============ ADMIN DASHBOARD ============ */
+async function loadAdminTab(){
+  if (!currentUserIsAdmin) return;
+
+  const [{ count: userCount }, { count: postCount }, { count: communityCount }, { count: reportCount }] = await Promise.all([
+    sb.from('profiles').select('id', { count: 'exact', head: true }),
+    sb.from('posts').select('id', { count: 'exact', head: true }),
+    sb.from('communities').select('id', { count: 'exact', head: true }),
+    sb.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'REPORTED')
+  ]);
+  $('am-users').textContent = userCount ?? '—';
+  $('am-posts').textContent = postCount ?? '—';
+  $('am-communities').textContent = communityCount ?? '—';
+  $('am-reports').textContent = reportCount ?? '—';
+
+  const { data: reports, error } = await sb
+    .from('reports')
+    .select('id, target_type, target_id, reason, status, created_at, profiles!reports_reporter_id_fkey(username)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error || !reports || reports.length === 0){
+    $('admin-reports-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No reports.</p>`;
+    return;
+  }
+
+  $('admin-reports-list').innerHTML = reports.map(r => `
+    <div class="campaign-row" data-report-id="${r.id}" data-target-type="${r.target_type}" data-target-id="${r.target_id}">
+      <strong>${escapeHtml(r.target_type)}</strong> reported by @${escapeHtml(r.profiles?.username || 'unknown')} — <em>${escapeHtml(r.reason)}</em><br>
+      <span style="color:var(--paper-dim)">${timeAgo(r.created_at)} · status: ${escapeHtml(r.status)}</span><br>
+      ${r.status === 'REPORTED' ? `
+        <button class="btn admin-dismiss-btn" style="margin-top:6px">Dismiss</button>
+        <button class="btn admin-remove-btn" style="margin-top:6px;color:#fca5a5;border-color:rgba(239,68,68,0.4)">Remove content</button>
+      ` : ''}
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.admin-dismiss-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-report-id]');
+      await sb.from('reports').update({ status: 'DISMISSED' }).eq('id', row.dataset.reportId);
+      loadAdminTab();
+    });
+  });
+
+  document.querySelectorAll('.admin-remove-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-report-id]');
+      const { targetType, targetId, reportId } = row.dataset;
+      if (!confirm('Remove this content? This action is visible to the reported user.')) return;
+
+      const tableMap = { post: 'posts', comment: 'comments', community: 'communities' };
+      if (tableMap[targetType]){
+        await sb.from(tableMap[targetType]).update({ status: 'REMOVED' }).eq('id', targetId);
+      } else if (targetType === 'user'){
+        await sb.from('profiles').update({ status: 'SUSPENDED' }).eq('id', targetId);
+      }
+      await sb.from('reports').update({ status: 'REMOVED' }).eq('id', reportId);
+      loadAdminTab();
+    });
+  });
+}
 
 /* ============ YOUTUBE DISCOVERY ============ */
 async function runYoutubeSearch(){

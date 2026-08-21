@@ -304,3 +304,57 @@ Not built, honestly: admin review dashboard, full multilingual UI (EN/MR/HI
 throughout), advertiser payment integration, bookmarking/"save", and a
 dedicated Creator Studio analytics view — these are natural next steps
 beyond the original 8-phase roadmap.
+
+## Phase 10 — the four remaining big items, now closed out
+
+### 1. Admin dashboard ✅
+Run `schema_phase10.sql`, then bootstrap your first admin (nobody gets this
+from signup — it's a manual, deliberate step):
+```sql
+update public.profiles set is_admin = true where username = 'yourusername';
+```
+Log back in — an **Admin** tab appears (hidden for everyone else): platform
+metrics (users/posts/communities/open reports) and a moderation queue
+pulling from every filed report. Dismiss or Remove content directly —
+removing sets the post/comment/community to REMOVED or suspends a
+reported user.
+
+### 2. Marathi + Hindi UI ✅ (primary chrome — not literally every string)
+A language switcher (EN / मराठी / हिंदी) sits in the top-right header,
+works logged in or out, and persists (localStorage, plus `profiles.language`
+for logged-in users). It covers navigation, the landing page, auth forms,
+and the most common actions.
+
+**Honest scope**: this translates interface chrome, not user-generated
+content (that's what people type) and not every secondary string (error
+toasts, less-common labels). Full 100% coverage of every string across all
+10 phases would be its own dedicated pass; this covers what a first-time
+Marathi/Hindi speaker sees immediately.
+
+### 3. Real ad payments (Razorpay) ✅ scaffolding — needs your own keys
+Two new Edge Functions: `create-razorpay-order` (creates the order, pins
+the amount server-side) and `verify-razorpay-payment` (checks Razorpay's
+HMAC signature server-side before crediting the campaign — this is what
+makes it a real payment rather than something the browser could fake). In
+the Earn tab, each campaign now has a **"Fund with Razorpay"** button that
+opens real Razorpay Checkout.
+
+**This one genuinely needs your own account** — it can't be completed
+without your business's Razorpay credentials:
+1. Sign up at razorpay.com (test mode needs no KYC and works immediately
+   with test cards; live payments need business KYC)
+2. Get your Key ID + Key Secret from Settings → API Keys
+3. Deploy both functions the same way as `youtube-search` (via the
+   dashboard editor)
+4. Set secrets: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` — Supabase already
+   provides `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` to every Edge
+   Function automatically, no need to set those yourself
+
+### 4. Creator Studio analytics chart ✅
+The Earn tab now draws a 14-day engagement bar chart (likes + comments
+received on your posts, per day) using a plain `<canvas>` — no chart
+library needed. It's real data, computed client-side from your actual
+`likes` and `comments` tables.
+
+All 10 phases are now built. What's left is real business setup (your own
+Razorpay account, an admin username to promote) rather than more code.

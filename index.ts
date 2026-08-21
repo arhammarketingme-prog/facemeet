@@ -1,15 +1,15 @@
-// supabase/functions/youtube-search/index.ts
+// supabase/functions/create-razorpay-order/index.ts
 //
-// Server-side proxy for the YouTube Data API v3 "search" endpoint.
-// The YOUTUBE_API_KEY lives only here (as a Supabase Edge Function
-// secret) — it is never sent to, or readable by, the browser.
+// Creates a Razorpay order for funding an ad campaign's budget.
+// RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET live only as Edge
+// Function secrets — the key SECRET never reaches the browser.
+// (The key ID alone is safe client-side — that's how Razorpay
+// Checkout works — but we still create the order here so the
+// amount can't be tampered with client-side either.)
 //
 // Deploy:
-//   supabase functions deploy youtube-search
-//   supabase secrets set YOUTUBE_API_KEY=your_key_here
-//
-// Invoke from the frontend with:
-//   sb.functions.invoke('youtube-search', { body: { query, type } })
+//   supabase functions deploy create-razorpay-order
+//   supabase secrets set RAZORPAY_KEY_ID=rzp_test_xxx RAZORPAY_KEY_SECRET=xxx
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -17,74 +17,74 @@ const CORS_HEADERS = {
 };
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
   try {
-    const apiKey = Deno.env.get("YOUTUBE_API_KEY");
-    if (!apiKey) {
-      // Graceful fallback per spec §14/§25/§45 — never break the app
-      // just because an external key hasn't been configured yet.
-      return new Response(
-        JSON.stringify({ error: "youtube_not_configured", items: [] }),
-        { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-      );
-    }
-
-    const { query, type = "video", pageToken } = await req.json();
-    if (!query || typeof query !== "string" || !query.trim()) {
-      return new Response(JSON.stringify({ error: "missing_query", items: [] }), {
-        status: 400,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    const keyId = Deno.env.get("RAZORPAY_KEY_ID");
+    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
+    if (!keyId || !keySecret) {
+      return new Response(JSON.stringify({ error: "payments_not_configured" }), {
+        status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
     }
 
-    const safeType = type === "channel" ? "channel" : "video";
-    const params = new URLSearchParams({
-      part: "snippet",
-      q: query.trim(),
-      type: safeType,
-      maxResults: "12",
-      safeSearch: "moderate",
-      key: apiKey,
-    });
-    if (pageToken) params.set("pageToken", pageToken);
-
-    const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
-
-    if (!ytRes.ok) {
-      // Quota exceeded, invalid key, etc. — surface a clean fallback
-      // state instead of a raw error the frontend can't render.
-      const detail = await ytRes.text();
-      console.error("YouTube API error:", ytRes.status, detail);
-      return new Response(
-        JSON.stringify({ error: "youtube_unavailable", items: [] }),
-        { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-      );
+    const { campaignId, amountInr } = await req.json();
+    if (!campaignId || !amountInr || amountInr < 1) {
+      return new Response(JSON.stringify({ error: "invalid_request" }), {
+        status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
     }
 
-    const data = await ytRes.json();
-    const items = (data.items || []).map((it: any) => ({
-      kind: safeType,
-      videoId: it.id?.videoId || null,
-      channelId: it.id?.channelId || it.snippet?.channelId || null,
-      title: it.snippet?.title || "",
-      description: it.snippet?.description || "",
-      channelTitle: it.snippet?.channelTitle || "",
-      publishedAt: it.snippet?.publishedAt || null,
-      thumbnail: it.snippet?.thumbnails?.medium?.url || it.snippet?.thumbnails?.default?.url || null,
-    }));
+    const auth = btoa(`${keyId}:${keySecret}`);
+    const orderRes = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: { "Authorization": `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: Math.round(amountInr * 100), // paise
+        currency: "INR",
+        notes: { campaignId },
+      }),
+    });
+
+    if (!orderRes.ok) {
+      const detail = await orderRes.text();
+      console.error("Razorpay order error:", detail);
+      return new Response(JSON.stringify({ error: "order_failed" }), {
+        status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+
+    const order = await orderRes.json();
+
+    // record a 'created' payment row via the service role, so the
+    // amount is pinned server-side before checkout even opens
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (supabaseUrl && serviceKey) {
+      await fetch(`${supabaseUrl}/rest/v1/ad_payments`, {
+        method: "POST",
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          campaign_id: campaignId,
+          amount_inr: amountInr,
+          razorpay_order_id: order.id,
+          status: "created",
+        }),
+      });
+    }
 
     return new Response(
-      JSON.stringify({ items, nextPageToken: data.nextPageToken || null }),
+      JSON.stringify({ orderId: order.id, amount: order.amount, currency: order.currency, keyId }),
       { headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("youtube-search function error:", err);
-    return new Response(JSON.stringify({ error: "server_error", items: [] }), {
-      status: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    console.error("create-razorpay-order error:", err);
+    return new Response(JSON.stringify({ error: "server_error" }), {
+      status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
 });
