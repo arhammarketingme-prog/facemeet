@@ -245,7 +245,47 @@ Responsive, performance, and accessibility polish. No database changes —
   `preconnect` hint to the Supabase project domain for a faster first
   request.
 
-## Full acceptance check (spec §60)
+## Phase 9 — fixes + remaining quick wins (this round)
+
+You asked specifically why message notifications weren't arriving, plus to
+finish whatever's left, fastest-impact first. Priority order used, and why:
+
+1. **Message notifications (the reported bug)** — a trigger on
+   `messages_metadata` now inserts a `'message'`-type notification for the
+   recipient the moment a message is sent. The Alerts tab's unread dot also
+   now polls every 25 seconds while you're logged in, so you don't have to
+   sit on the Alerts tab to notice — highest priority since it was reported
+   as broken.
+2. **Save/bookmark posts** — quick, high-visible-value, was in the original
+   spec's post actions list. Tap 🔖 on any post; find them later under
+   Profile → "Saved Posts".
+3. **Demo polls** — the original spec's demo ecosystem included sample
+   polls with sample responses; these were missing. ~10 illustrative polls
+   now show on the landing page's demo section (static results, not
+   interactive — they're DEMO content).
+4. **Latest / Trending sort** on the Home feed — a fast, self-contained
+   addition (`ORDER BY likes_count` vs `created_at`) that covers part of
+   the spec's "Explore → Trending" idea without a bigger rebuild.
+
+Run `supabase/schema_phase9.sql` after phases 1–4, 6, 7. Only `index.html`
+changed besides that.
+
+### Deliberately deferred (bigger, lower-ratio-of-value-to-time)
+
+- **Admin review dashboard** — needs a role system (admin flag + RLS
+  changes across nearly every table) before it can be built safely. Real
+  scope, not a quick add.
+- **Full multilingual UI (English/Marathi/Hindi)** — `profiles.language`
+  already exists as a column, but translating every UI string and wiring a
+  language switcher is a large, mostly-mechanical effort better done as its
+  own focused pass rather than squeezed in.
+- **Creator Studio analytics (views-over-time charts)** — needs a
+  page-view event log that doesn't exist yet; the current channel view
+  count is a simple counter, not a time series.
+- **Real ad-network / payment integration** — explicitly future work per
+  the original spec (§16); nothing to build client-side today.
+
+Say the word on any of these and it's next.
 
 | Area | Status |
 |---|---|

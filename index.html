@@ -191,6 +191,7 @@
     border-bottom:2px solid transparent;
   }
   .tabbtn.active{color:var(--paper);border-bottom-color:var(--marigold);}
+  .feed-sort-btn.active{background:var(--marigold);color:var(--ink);border-color:var(--marigold);font-weight:600;}
   .tabpanel{padding-top:24px;}
   .post{
     background:var(--ink-soft);border:1px solid var(--line);border-radius:var(--radius);
@@ -382,6 +383,10 @@
     <h3 style="margin-top:32px">Sample communities</h3>
     <div id="demo-communities-loading" class="skeleton" style="width:60%"></div>
     <div id="demo-communities-grid" class="demo-grid"></div>
+
+    <h3 style="margin-top:32px">Sample polls</h3>
+    <div id="demo-polls-loading" class="skeleton" style="width:60%"></div>
+    <div id="demo-polls-list"></div>
   </section>
 
   <section class="panel">
@@ -477,6 +482,10 @@
     </div>
     <div id="feed-empty" class="hidden">
       <p class="msg msg-ok">No posts yet — be the first to share something.</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn feed-sort-btn active" data-sort="latest">Latest</button>
+      <button class="btn feed-sort-btn" data-sort="trending">Trending</button>
     </div>
     <div id="sponsored-slot"></div>
     <div id="feed-list"></div>
@@ -666,6 +675,11 @@
         <div class="field"><label for="p-referral">Your referral code</label><input id="p-referral" type="text" readonly></div>
         <div id="save-msg-slot"></div>
         <button class="btn btn-solid" id="btn-save">Save changes</button>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-top:0">Saved Posts</h3>
+        <div id="saved-posts-list"><p style="color:var(--paper-dim);font-size:0.85rem">Tap 🔖 Save on any post to keep it here.</p></div>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -867,12 +881,16 @@ $('btn-logout').addEventListener('click', async () => {
 });
 
 /* ---- entry point after login/signup: show app shell on Home tab ---- */
+let notifPollHandle = null;
 async function loadProfile(){
   const { data: { user } } = await sb.auth.getUser();
   currentUser = user || null;
   showView('app');
   showTabChrome();
   checkUnreadNotifDot();
+  if (!notifPollHandle){
+    notifPollHandle = setInterval(checkUnreadNotifDot, 25000);
+  }
   await loadProfileTabOnly();
 }
 function showTabChrome(){
@@ -901,6 +919,25 @@ async function loadProfileTabOnly(){
   $('p-channel').value = profile.channel_name || '';
   $('p-bio').value = profile.bio || '';
   $('p-referral').value = profile.referral_code || '';
+
+  await loadSavedPosts();
+}
+
+async function loadSavedPosts(){
+  const { data: rows, error } = await sb
+    .from('saved_posts')
+    .select('post_id, posts(id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name))')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error || !rows || rows.length === 0){
+    $('saved-posts-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">Tap 🔖 Save on any post to keep it here.</p>`;
+    return;
+  }
+  const posts = rows.map(r => r.posts).filter(Boolean);
+  $('saved-posts-list').innerHTML = posts.map(p => renderPost(p, false, false, true)).join('');
+  posts.forEach(p => wirePostCard(p.id));
 }
 
 $('profile-retry').addEventListener('click', loadProfileTabOnly);
@@ -1057,11 +1094,14 @@ async function openCommunity(cid, name, meta){
   if (!posts || posts.length === 0){ $('cd-feed').innerHTML = `<p style="color:var(--paper-dim)">No posts in this community yet.</p>`; return; }
 
   let likedSet = new Set();
+  let savedSet = new Set();
   if (currentUser){
     const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
     likedSet = new Set((myLikes || []).map(l => l.post_id));
+    const { data: mySaved } = await sb.from('saved_posts').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
+    savedSet = new Set((mySaved || []).map(s => s.post_id));
   }
-  $('cd-feed').innerHTML = posts.map(p => renderPost(p, likedSet.has(p.id), true)).join('');
+  $('cd-feed').innerHTML = posts.map(p => renderPost(p, likedSet.has(p.id), true, savedSet.has(p.id))).join('');
   posts.forEach(p => wirePostCard(p.id));
 }
 
@@ -1089,6 +1129,16 @@ $('btn-add-poll-option').addEventListener('click', () => {
 const FEED_PAGE_SIZE = 15;
 let feedOffset = 0;
 let feedBlockedIds = new Set();
+let feedSort = 'latest';
+
+document.querySelectorAll('.feed-sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.feed-sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    feedSort = btn.dataset.sort;
+    loadFeed();
+  });
+});
 
 async function loadFeed(){
   show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
@@ -1127,28 +1177,35 @@ async function loadFeed(){
 }
 
 async function fetchAndRenderPostsPage(){
-  const { data: rawPosts, error } = await sb
+  let query = sb
     .from('posts')
     .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('status', 'ACTIVE')
-    .is('community_id', null)
-    .order('created_at', { ascending: false })
-    .range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
+    .is('community_id', null);
+
+  query = feedSort === 'trending'
+    ? query.order('likes_count', { ascending: false }).order('created_at', { ascending: false })
+    : query.order('created_at', { ascending: false });
+
+  const { data: rawPosts, error } = await query.range(feedOffset, feedOffset + FEED_PAGE_SIZE - 1);
 
   if (error){ show($('feed-error')); return false; }
   const posts = (rawPosts || []).filter(p => !feedBlockedIds.has(p.author_id));
 
   let likedSet = new Set();
   let followingSet = new Set();
+  let savedSet = new Set();
   if (currentUser && posts.length){
     const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
     likedSet = new Set((myLikes || []).map(l => l.post_id));
     const authorIds = [...new Set(posts.map(p => p.author_id))];
     const { data: myFollows } = await sb.from('follows').select('following_id').eq('follower_id', currentUser.id).in('following_id', authorIds);
     followingSet = new Set((myFollows || []).map(f => f.following_id));
+    const { data: mySaved } = await sb.from('saved_posts').select('post_id').eq('user_id', currentUser.id).in('post_id', posts.map(p => p.id));
+    savedSet = new Set((mySaved || []).map(s => s.post_id));
   }
 
-  $('feed-list').insertAdjacentHTML('beforeend', posts.map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id))).join(''));
+  $('feed-list').insertAdjacentHTML('beforeend', posts.map(p => renderPost(p, likedSet.has(p.id), followingSet.has(p.author_id), savedSet.has(p.id))).join(''));
   posts.forEach(p => wirePostCard(p.id));
 
   feedOffset += FEED_PAGE_SIZE;
@@ -1199,7 +1256,7 @@ function wirePollCard(pollId){
   });
 }
 
-function renderPost(p, liked, following){
+function renderPost(p, liked, following, saved){
   const author = p.profiles || {};
   const name = author.display_name || author.username || 'Unknown';
   const isSelf = currentUser && p.author_id === currentUser.id;
@@ -1217,6 +1274,7 @@ function renderPost(p, liked, following){
       <div class="post-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}" aria-label="${liked ? 'Unlike' : 'Like'} this post">♥ <span class="like-count">${p.likes_count}</span></button>
         <button class="comment-toggle" aria-label="Show comments">💬 <span class="comment-count">${p.comments_count}</span></button>
+        ${currentUser ? `<button class="save-btn ${saved ? 'liked' : ''}" data-saved="${saved}" aria-label="${saved ? 'Unsave' : 'Save'} this post">🔖 ${saved ? 'Saved' : 'Save'}</button>` : ''}
         ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report" aria-label="Report this post">⚑ Report</button><button class="block-btn" title="Block" aria-label="Block this person">🚫 Block</button>` : ''}
       </div>
       <div class="comments-box hidden">
@@ -1247,6 +1305,22 @@ function wirePostCard(postId){
     }
     likeBtn.disabled = false;
   });
+
+  const saveBtn = card.querySelector('.save-btn');
+  if (saveBtn){
+    saveBtn.addEventListener('click', async () => {
+      const saved = saveBtn.dataset.saved === 'true';
+      saveBtn.disabled = true;
+      if (saved){
+        await sb.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+        saveBtn.dataset.saved = 'false'; saveBtn.classList.remove('liked'); saveBtn.textContent = '🔖 Save';
+      } else {
+        await sb.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
+        saveBtn.dataset.saved = 'true'; saveBtn.classList.add('liked'); saveBtn.textContent = '🔖 Saved';
+      }
+      saveBtn.disabled = false;
+    });
+  }
 
   const followBtn = card.querySelector('.follow-btn');
   if (followBtn){
@@ -1430,7 +1504,8 @@ const notifLabels = {
   like: 'liked your post',
   comment: 'commented on your post',
   community_join: 'joined your community',
-  poll_vote: 'voted on your poll'
+  poll_vote: 'voted on your poll',
+  message: 'sent you a message'
 };
 
 async function loadNotifications(){
@@ -1450,11 +1525,20 @@ async function loadNotifications(){
 
   $('notif-list').innerHTML = notifs.map(n => {
     const a = n.profiles || {};
-    return `<div class="notif-item ${n.is_read ? '' : 'unread'}">
+    const clickable = n.type === 'message' ? `style="cursor:pointer" data-open-chat-with="${n.actor_id}"` : '';
+    return `<div class="notif-item ${n.is_read ? '' : 'unread'}" ${clickable}>
       <div class="post-avatar" style="width:30px;height:30px;font-size:0.78rem">${initials(a.display_name || a.username || '?')}</div>
       <div><b>${escapeHtml(a.display_name || a.username || 'Someone')}</b> ${notifLabels[n.type] || 'sent you a notification'} · <span class="post-meta">${timeAgo(n.created_at)}</span></div>
     </div>`;
   }).join('');
+
+  document.querySelectorAll('[data-open-chat-with]').forEach(el => {
+    el.addEventListener('click', async () => {
+      showTab('messages');
+      await openMessagesTab();
+      if (myKeyHandle) openConversation(el.dataset.openChatWith);
+    });
+  });
 
   const unreadIds = notifs.filter(n => !n.is_read).map(n => n.id);
   if (unreadIds.length){
@@ -1938,6 +2022,34 @@ async function loadDemoPreview(){
     `).join('');
   } else {
     $('demo-communities-grid').innerHTML = '';
+  }
+
+  // polls (illustrative — static results, not interactive)
+  const { data: polls, error: plErr } = await sb
+    .from('demo_polls')
+    .select('id, question, category, demo_poll_options(option_text, votes_count, position)')
+    .order('created_at', { ascending: false })
+    .limit(6);
+  $('demo-polls-loading').classList.add('hidden');
+  if (!plErr && polls && polls.length){
+    $('demo-polls-list').innerHTML = polls.map(poll => {
+      const opts = (poll.demo_poll_options || []).sort((a,b) => a.position - b.position);
+      const total = opts.reduce((s,o) => s + o.votes_count, 0) || 1;
+      return `<div class="demo-post">
+        <span class="demo-badge">DEMO</span>
+        <div class="post-content" style="margin-top:6px"><strong>${escapeHtml(poll.question)}</strong></div>
+        <div class="poll-options" style="margin-top:8px">
+          ${opts.map(o => `
+            <div class="poll-option-row" style="cursor:default">
+              <div class="fill" style="width:${Math.round(o.votes_count/total*100)}%"></div>
+              <span class="label">${escapeHtml(o.option_text)}</span>
+              <span class="pct">${Math.round(o.votes_count/total*100)}%</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    $('demo-polls-list').innerHTML = '';
   }
 }
 
