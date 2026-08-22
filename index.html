@@ -164,6 +164,25 @@
 
   /* ---- profile ---- */
   .profilewrap{max-width:640px;margin:0 auto;padding:48px 24px;}
+  .app-layout{display:block;}
+  .right-rail{display:none;}
+  @media (min-width:900px){
+    .profilewrap{max-width:700px;}
+  }
+  @media (min-width:1100px){
+    .app-layout{
+      display:grid;grid-template-columns:minmax(0,700px) 300px;
+      gap:32px;max-width:1060px;margin:0 auto;padding:0 24px 48px;align-items:start;
+    }
+    .app-layout .profilewrap{max-width:none;padding:24px 0 0;margin:0;}
+    .right-rail{
+      display:block;position:sticky;top:88px;padding-top:24px;
+    }
+    .right-rail .card{margin-bottom:16px;}
+    .right-rail h4{margin:0 0 12px;font-size:0.95rem;}
+    .rail-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:0.85rem;}
+    .rail-item:last-child{border-bottom:none;}
+  }
   .profile-head{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
   .avatar{
     width:64px;height:64px;border-radius:50%;
@@ -435,6 +454,7 @@
   <nav class="subnav" role="tablist" aria-label="Main sections">
     <button class="tabbtn active" id="tab-btn-home" data-tab="home" role="tab" aria-selected="true" data-i18n="nav_home">Home</button>
     <button class="tabbtn" id="tab-btn-communities" data-tab="communities" role="tab" aria-selected="false" data-i18n="nav_communities">Communities</button>
+    <button class="tabbtn" id="tab-btn-explore" data-tab="explore" role="tab" aria-selected="false">Explore</button>
     <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube" role="tab" aria-selected="false" data-i18n="nav_youtube">YouTube</button>
     <button class="tabbtn" id="tab-btn-earn" data-tab="earn" role="tab" aria-selected="false" data-i18n="nav_earn">Earn</button>
     <button class="tabbtn" id="tab-btn-messages" data-tab="messages" role="tab" aria-selected="false" data-i18n="nav_messages">Messages</button>
@@ -453,7 +473,8 @@
   </nav>
 
   <!-- ---- HOME / FEED TAB ---- -->
-  <div id="tab-home" class="tabpanel profilewrap">
+  <div id="tab-home" class="tabpanel app-layout">
+   <div class="profilewrap" style="padding-top:24px">
     <div class="card" style="margin-bottom:20px">
       <div class="field" style="margin-bottom:12px">
         <label for="composer-community" data-i18n="label_post_to">Post to</label>
@@ -462,6 +483,10 @@
 
       <div id="composer-mode-post">
         <textarea id="composer-text" placeholder="What's on your mind?" data-i18n-placeholder="placeholder_whats_on_mind" maxlength="2000"></textarea>
+        <div id="image-preview-wrap" class="hidden" style="margin-top:8px">
+          <img id="image-preview" style="max-width:100%;border-radius:10px;display:block">
+          <button class="btn" id="btn-remove-image" type="button" style="margin-top:6px">Remove image</button>
+        </div>
       </div>
       <div id="composer-mode-poll" class="hidden">
         <div class="field"><input type="text" id="poll-question" placeholder="Ask a question…" maxlength="300"></div>
@@ -474,7 +499,11 @@
 
       <div id="composer-msg-slot"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-        <button class="btn" id="btn-toggle-poll" type="button">📊 Poll</button>
+        <span>
+          <label class="btn" for="composer-image-input" style="cursor:pointer" title="Add image">🖼️</label>
+          <input type="file" id="composer-image-input" accept="image/*" class="hidden">
+          <button class="btn" id="btn-toggle-poll" type="button">📊 Poll</button>
+        </span>
         <button class="btn btn-solid" id="btn-post" data-i18n="btn_post">Post</button>
       </div>
     </div>
@@ -499,6 +528,33 @@
     <div style="text-align:center;margin-top:10px">
       <button class="btn hidden" id="btn-load-more-feed">Load more</button>
     </div>
+   </div>
+
+   <aside class="right-rail">
+    <div class="card">
+      <h4>Trending now</h4>
+      <div id="rail-trending"><div class="skeleton" style="width:70%"></div></div>
+    </div>
+    <div class="card">
+      <h4>Suggested creators</h4>
+      <div id="rail-creators"><div class="skeleton" style="width:70%"></div></div>
+    </div>
+   </aside>
+  </div>
+
+  <!-- ---- EXPLORE TAB ---- -->
+  <div id="tab-explore" class="tabpanel profilewrap hidden">
+    <h3 style="margin-top:0">Popular Creators</h3>
+    <div id="explore-popular-creators" class="demo-grid"><div class="skeleton" style="width:60%"></div></div>
+
+    <h3 style="margin-top:28px">New Creators</h3>
+    <div id="explore-new-creators" class="demo-grid"></div>
+
+    <h3 style="margin-top:28px">Trending Posts</h3>
+    <div id="explore-trending-posts"></div>
+
+    <h3 style="margin-top:28px">Browse Communities</h3>
+    <div id="explore-communities" class="demo-grid"></div>
   </div>
 
   <!-- ---- COMMUNITIES TAB ---- -->
@@ -620,8 +676,12 @@
         <div class="stat"><div class="val" id="am-reports">—</div><div class="lbl">Open reports</div></div>
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Auto-Flagged Content (banned terms / spam burst)</h3>
+      <div id="admin-autoflag-list"><div class="skeleton" style="width:60%"></div></div>
+    </div>
     <div class="card">
-      <h3 style="margin-top:0">Moderation Queue</h3>
+      <h3 style="margin-top:0">Moderation Queue (user reports)</h3>
       <div id="admin-reports-list"><div class="skeleton" style="width:60%"></div></div>
     </div>
   </div>
@@ -762,7 +822,62 @@
   </div>
 </main>
 
-<footer>Nexus — Phase 7 build. Admin dashboard and full multilingual UI are the remaining roadmap items. <a href="#" id="footer-privacy-link" style="color:var(--teal)">Privacy Center</a></footer>
+<!-- ============ LEGAL ============ -->
+<main id="view-legal" class="hidden">
+  <div class="profilewrap" style="max-width:680px">
+    <button class="btn" id="btn-close-legal">← Back</button>
+    <h2 style="margin-top:20px">Legal & Community Standards</h2>
+    <p style="color:var(--paper-dim)">These are starting-point policies for the platform. <strong>They have not been reviewed by a lawyer</strong> — have one review and adapt them before relying on them with real users, especially the liability and grievance-officer sections, which have specific requirements under India's IT Rules.</p>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Terms of Service (summary)</h3>
+      <p style="font-size:0.88rem">By using Nexus you agree: you own or have rights to what you post; you won't post illegal content, impersonate others, or attempt to manipulate engagement/earnings through bots or fake accounts; Nexus can remove content or suspend accounts that violate these terms or applicable law; the demo/illustrative features (demo accounts, demo earnings, demo ad marketplace) are not real people or real money.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Community Guidelines (summary)</h3>
+      <p style="font-size:0.88rem">No hate speech, harassment, threats, or content sexualizing minors — zero tolerance, immediate removal and account suspension. No spam, engagement manipulation, or coordinated fake activity. No illegal content of any kind. Report and Block are available on every post; reported content is auto-flagged for review, and admins can remove content or suspend accounts.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">Copyright Policy</h3>
+      <p style="font-size:0.88rem">Don't post content you don't have rights to. If you believe your copyrighted work was posted without permission, contact the grievance address below with: (1) a description of the work, (2) the URL/location of the infringing post, (3) your contact details, and (4) a statement that you have a good-faith belief the use is unauthorized. Repeat infringers are subject to account suspension.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Grievance Officer / Contact</h3>
+      <p style="font-size:0.88rem">Under India's IT Rules, platforms above a certain size must name a Grievance Officer and publish contact details, with defined response timelines. <strong>Action needed from you:</strong> replace the placeholder below with a real name and email/postal address before relying on this for compliance.</p>
+      <p style="font-size:0.85rem;color:var(--paper-dim)">Grievance Officer: [Your name] · Email: [your-grievance-email@yourdomain.com] · Nexus aims to acknowledge reports within 24 hours and resolve within 15 days, in line with standard intermediary timelines — update this if your actual process differs.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ============ ONBOARDING (shown once after signup) ============ -->
+<div id="onboarding-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(11,17,32,0.95);z-index:200;overflow-y:auto">
+  <div class="profilewrap" style="max-width:520px">
+    <div class="card">
+      <div id="onb-step-interests">
+        <h3 style="margin-top:0">What are you into?</h3>
+        <p style="color:var(--paper-dim);font-size:0.85rem">Pick a few — helps nothing yet, but it's saved to your profile for later.</p>
+        <div id="onb-interests-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0"></div>
+        <button class="btn btn-solid" id="onb-next-1">Continue</button>
+        <button class="btn" id="onb-skip-1">Skip onboarding</button>
+      </div>
+      <div id="onb-step-follow" class="hidden">
+        <h3 style="margin-top:0">Follow a few creators</h3>
+        <div id="onb-creators-list" style="margin:16px 0"></div>
+        <button class="btn btn-solid" id="onb-next-2">Continue</button>
+      </div>
+      <div id="onb-step-community" class="hidden">
+        <h3 style="margin-top:0">Join a community</h3>
+        <div id="onb-communities-list" style="margin:16px 0"></div>
+        <button class="btn btn-solid" id="onb-finish">Take me to my feed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Nexus — Phase 11 build. <a href="#" id="footer-privacy-link" style="color:var(--teal)">Privacy Center</a> · <a href="#" id="footer-legal-link" style="color:var(--teal)">Legal</a></footer>
 
 <script>
 /* ------------------------------------------------------------
@@ -866,7 +981,7 @@ document.getElementById('lang-switcher')?.addEventListener('change', async (e) =
 const show = (el) => el.classList.remove('hidden');
 const hide = (el) => el.classList.add('hidden');
 
-function views(){ return { landing: $('view-landing'), auth: $('view-auth'), app: $('view-app'), privacy: $('view-privacy') }; }
+function views(){ return { landing: $('view-landing'), auth: $('view-auth'), app: $('view-app'), privacy: $('view-privacy'), legal: $('view-legal') }; }
 let viewBeforePrivacy = 'landing';
 function showView(name){
   const v = views();
@@ -876,14 +991,20 @@ function openPrivacyCenter(){
   viewBeforePrivacy = document.getElementById('view-app').classList.contains('hidden') ? 'landing' : 'app';
   showView('privacy');
 }
+function openLegal(){
+  viewBeforePrivacy = document.getElementById('view-app').classList.contains('hidden') ? 'landing' : 'app';
+  showView('legal');
+}
 document.getElementById('footer-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
+document.getElementById('footer-legal-link').addEventListener('click', (e) => { e.preventDefault(); openLegal(); });
 document.getElementById('btn-close-privacy').addEventListener('click', () => { showView(viewBeforePrivacy); });
+document.getElementById('btn-close-legal').addEventListener('click', () => { showView(viewBeforePrivacy); });
 
 /* ---- app shell: tabs ---- */
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','youtube','earn','messages','notifications','search','profile','admin'].forEach(t => {
+  ['home','communities','explore','youtube','earn','messages','notifications','search','profile','admin'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     const btn = $('tab-btn-' + t);
     btn.classList.toggle('active', t === tab);
@@ -895,6 +1016,7 @@ function showTab(tab){
   if (tab === 'home') loadFeed();
   if (tab === 'profile') loadProfileTabOnly();
   if (tab === 'communities') loadCommunities();
+  if (tab === 'explore') loadExplore();
   if (tab === 'notifications') loadNotifications();
   if (tab === 'earn') loadEarnCenter();
   if (tab === 'messages') openMessagesTab();
@@ -964,6 +1086,7 @@ $('btn-signup').addEventListener('click', async () => {
 
   if (data.session){
     await loadProfile();
+    openOnboarding();
   } else {
     flash('auth-msg-slot', 'Account created. Check your email to confirm, then log in.', 'ok');
     showAuth('login');
@@ -1049,7 +1172,7 @@ async function loadProfileTabOnly(){
 async function loadSavedPosts(){
   const { data: rows, error } = await sb
     .from('saved_posts')
-    .select('post_id, posts(id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name))')
+    .select('post_id, posts(id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name))')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -1207,7 +1330,7 @@ async function openCommunity(cid, name, meta){
 
   const { data: posts, error } = await sb
     .from('posts')
-    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('community_id', cid)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false })
@@ -1263,11 +1386,111 @@ document.querySelectorAll('.feed-sort-btn').forEach(btn => {
   });
 });
 
+/* ============ EXPLORE ============ */
+async function loadExplore(){
+  const { data: popular } = await sb.from('profiles').select('username, display_name, bio, channel_followers_count').order('channel_followers_count', { ascending: false }).limit(8);
+  $('explore-popular-creators').innerHTML = (popular && popular.length) ? popular.map(u => `
+    <div class="demo-card">
+      <div class="dc-name">${escapeHtml(u.display_name || u.username)}</div>
+      <div class="dc-cat">@${escapeHtml(u.username)}</div>
+      <div class="dc-bio">${escapeHtml(u.bio || '')}</div>
+      <div class="dc-stats"><span>${u.channel_followers_count} followers</span></div>
+    </div>`).join('') : `<p style="color:var(--paper-dim)">No creators yet.</p>`;
+
+  const { data: fresh } = await sb.from('profiles').select('username, display_name, bio, created_at').order('created_at', { ascending: false }).limit(8);
+  $('explore-new-creators').innerHTML = (fresh && fresh.length) ? fresh.map(u => `
+    <div class="demo-card">
+      <div class="dc-name">${escapeHtml(u.display_name || u.username)}</div>
+      <div class="dc-cat">@${escapeHtml(u.username)}</div>
+      <div class="dc-bio">${escapeHtml(u.bio || '')}</div>
+      <div class="dc-stats"><span>joined ${timeAgo(u.created_at)} ago</span></div>
+    </div>`).join('') : '';
+
+  const { data: trending } = await sb
+    .from('posts')
+    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('status', 'ACTIVE').order('likes_count', { ascending: false }).limit(10);
+  let likedSet = new Set();
+  if (currentUser && trending && trending.length){
+    const { data: myLikes } = await sb.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', trending.map(p => p.id));
+    likedSet = new Set((myLikes || []).map(l => l.post_id));
+  }
+  $('explore-trending-posts').innerHTML = (trending && trending.length) ? trending.map(p => renderPost(p, likedSet.has(p.id), false, false)).join('') : `<p style="color:var(--paper-dim)">Nothing trending yet.</p>`;
+  (trending || []).forEach(p => wirePostCard(p.id));
+
+  const { data: comms } = await sb.from('communities').select('*').eq('status', 'ACTIVE').order('members_count', { ascending: false }).limit(8);
+  $('explore-communities').innerHTML = (comms && comms.length) ? comms.map(c => `
+    <div class="demo-card">
+      <div class="dc-name">${escapeHtml(c.name)}</div>
+      <div class="dc-bio">${escapeHtml(c.description || '')}</div>
+      <div class="dc-stats"><span>${c.members_count} members</span></div>
+    </div>`).join('') : '';
+}
+
+/* ============ RIGHT RAIL (desktop only) ============ */
+async function loadRightRail(){
+  const { data: topPosts } = await sb
+    .from('posts').select('content, likes_count, profiles!posts_author_id_fkey(username, display_name)')
+    .eq('status', 'ACTIVE').order('likes_count', { ascending: false }).limit(5);
+  $('rail-trending').innerHTML = (topPosts && topPosts.length)
+    ? topPosts.map(p => `<div class="rail-item"><span>💬</span><span>${escapeHtml((p.content || '').slice(0,50))}${p.content && p.content.length>50 ? '…' : ''} <span style="color:var(--paper-dim)">· ♥${p.likes_count}</span></span></div>`).join('')
+    : `<p style="color:var(--paper-dim);font-size:0.85rem">Nothing trending yet.</p>`;
+
+  const { data: topCreators } = await sb
+    .from('profiles').select('username, display_name, channel_followers_count')
+    .order('channel_followers_count', { ascending: false }).limit(5);
+  $('rail-creators').innerHTML = (topCreators && topCreators.length)
+    ? topCreators.map(c => `<div class="rail-item"><div class="post-avatar" style="width:28px;height:28px;font-size:0.72rem">${initials(c.display_name || c.username)}</div><span>${escapeHtml(c.display_name || c.username)}</span></div>`).join('')
+    : `<p style="color:var(--paper-dim);font-size:0.85rem">No creators yet.</p>`;
+}
+
+/* ============ IMAGE UPLOAD (Cloudinary, unsigned) ============
+   Replace with your own cloud name + unsigned upload preset.
+   Unsigned uploads are designed to be called from the browser —
+   no API secret is needed or exposed here. */
+const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUDINARY_CLOUD_NAME';
+const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UNSIGNED_UPLOAD_PRESET';
+let pendingImageUrl = null;
+
+$('composer-image-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  clearFlash('composer-msg-slot');
+
+  if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUDINARY_CLOUD_NAME'){
+    flash('composer-msg-slot', 'Image upload isn\'t configured yet — add your Cloudinary cloud name in index.html.', 'error');
+    return;
+  }
+
+  flash('composer-msg-slot', 'Uploading image…', 'ok');
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!data.secure_url) throw new Error('upload failed');
+    pendingImageUrl = data.secure_url;
+    $('image-preview').src = pendingImageUrl;
+    show($('image-preview-wrap'));
+    clearFlash('composer-msg-slot');
+  } catch(err){
+    flash('composer-msg-slot', 'Image upload failed — try again.', 'error');
+  }
+});
+$('btn-remove-image').addEventListener('click', () => {
+  pendingImageUrl = null;
+  $('composer-image-input').value = '';
+  hide($('image-preview-wrap'));
+});
+
 async function loadFeed(){
   show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
   hide($('btn-load-more-feed'));
   populateComposerCommunities();
   loadSponsoredCard();
+  loadRightRail();
   feedOffset = 0;
 
   feedBlockedIds = new Set();
@@ -1302,7 +1525,7 @@ async function loadFeed(){
 async function fetchAndRenderPostsPage(){
   let query = sb
     .from('posts')
-    .select('id, content, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('status', 'ACTIVE')
     .is('community_id', null);
 
@@ -1394,6 +1617,7 @@ function renderPost(p, liked, following, saved){
         ${(!isSelf && currentUser) ? `<button class="btn follow-btn ${following ? 'is-following' : ''}" data-follow-target="${p.author_id}">${following ? 'Following' : 'Follow'}</button>` : ''}
       </div>
       <div class="post-content">${escapeHtml(p.content)}</div>
+      ${p.media_url ? `<img src="${p.media_url}" alt="" loading="lazy" style="width:100%;border-radius:10px;margin-bottom:10px;display:block">` : ''}
       <div class="post-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}" aria-label="${liked ? 'Unlike' : 'Like'} this post">♥ <span class="like-count">${p.likes_count}</span></button>
         <button class="comment-toggle" aria-label="Show comments">💬 <span class="comment-count">${p.comments_count}</span></button>
@@ -1556,12 +1780,21 @@ $('btn-post').addEventListener('click', async () => {
     $('btn-toggle-poll').click();
   } else {
     const text = $('composer-text').value.trim();
-    if (!text){ flash('composer-msg-slot', 'Write something before posting.', 'error'); return; }
+    if (!text && !pendingImageUrl){ flash('composer-msg-slot', 'Write something or add an image before posting.', 'error'); return; }
     btn.disabled = true; btn.textContent = 'Posting…';
-    const { error } = await sb.from('posts').insert({ author_id: currentUser.id, content: text, community_id: communityId });
+    const { error } = await sb.from('posts').insert({
+      author_id: currentUser.id,
+      content: text || '📷',
+      community_id: communityId,
+      media_url: pendingImageUrl,
+      post_type: pendingImageUrl ? 'image' : 'text'
+    });
     btn.disabled = false; btn.textContent = 'Post';
     if (error){ flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
     $('composer-text').value = '';
+    pendingImageUrl = null;
+    $('composer-image-input').value = '';
+    hide($('image-preview-wrap'));
   }
 
   if (communityId){ await openCommunity(communityId, $('composer-community').selectedOptions[0].textContent, ''); showTab('communities'); $('community-detail').scrollIntoView(); }
@@ -2144,6 +2377,48 @@ $('btn-send-message').addEventListener('click', async () => {
 document.getElementById('msg-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
 
 /* ============ ADMIN DASHBOARD ============ */
+async function loadAutoFlaggedQueue(){
+  const [{ data: flaggedPosts }, { data: flaggedComments }] = await Promise.all([
+    sb.from('posts').select('id, content, created_at, profiles!posts_author_id_fkey(username)').eq('status', 'UNDER_REVIEW').order('created_at', { ascending: false }).limit(30),
+    sb.from('comments').select('id, content, created_at, profiles!comments_author_id_fkey(username)').eq('status', 'UNDER_REVIEW').order('created_at', { ascending: false }).limit(30)
+  ]);
+  const items = [
+    ...(flaggedPosts || []).map(p => ({ ...p, type: 'post' })),
+    ...(flaggedComments || []).map(c => ({ ...c, type: 'comment' }))
+  ];
+
+  if (items.length === 0){
+    $('admin-autoflag-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">Nothing auto-flagged right now.</p>`;
+    return;
+  }
+
+  $('admin-autoflag-list').innerHTML = items.map(it => `
+    <div class="campaign-row" data-type="${it.type}" data-id="${it.id}">
+      <strong>${escapeHtml(it.type)}</strong> by @${escapeHtml(it.profiles?.username || 'unknown')} · ${timeAgo(it.created_at)}<br>
+      <span style="color:var(--paper-dim)">${escapeHtml(it.content.slice(0, 200))}</span><br>
+      <button class="btn autoflag-approve-btn" style="margin-top:6px">Approve (make visible)</button>
+      <button class="btn autoflag-remove-btn" style="margin-top:6px;color:#fca5a5;border-color:rgba(239,68,68,0.4)">Remove</button>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.autoflag-approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-type]');
+      const table = row.dataset.type === 'post' ? 'posts' : 'comments';
+      await sb.from(table).update({ status: 'ACTIVE' }).eq('id', row.dataset.id);
+      loadAutoFlaggedQueue();
+    });
+  });
+  document.querySelectorAll('.autoflag-remove-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-type]');
+      const table = row.dataset.type === 'post' ? 'posts' : 'comments';
+      await sb.from(table).update({ status: 'REMOVED' }).eq('id', row.dataset.id);
+      loadAutoFlaggedQueue();
+    });
+  });
+}
+
 async function loadAdminTab(){
   if (!currentUserIsAdmin) return;
 
@@ -2157,6 +2432,8 @@ async function loadAdminTab(){
   $('am-posts').textContent = postCount ?? '—';
   $('am-communities').textContent = communityCount ?? '—';
   $('am-reports').textContent = reportCount ?? '—';
+
+  await loadAutoFlaggedQueue();
 
   const { data: reports, error } = await sb
     .from('reports')
@@ -2359,6 +2636,68 @@ async function loadDemoPreview(){
     $('demo-polls-list').innerHTML = '';
   }
 }
+
+/* ============ ONBOARDING ============ */
+const ONBOARDING_INTERESTS = ['Technology','AI','Business','Finance','Education','Sports','Entertainment','Maharashtra','Gaming','Travel','Food','Agriculture'];
+let selectedInterests = new Set();
+
+function openOnboarding(){
+  const grid = $('onb-interests-grid');
+  grid.innerHTML = ONBOARDING_INTERESTS.map(i => `<button type="button" class="btn interest-chip" data-interest="${i}">${i}</button>`).join('');
+  grid.querySelectorAll('.interest-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.interest;
+      if (selectedInterests.has(val)){ selectedInterests.delete(val); chip.classList.remove('btn-solid'); }
+      else { selectedInterests.add(val); chip.classList.add('btn-solid'); }
+    });
+  });
+  $('onb-step-interests').classList.remove('hidden');
+  $('onb-step-follow').classList.add('hidden');
+  $('onb-step-community').classList.add('hidden');
+  show($('onboarding-overlay'));
+}
+
+$('onb-skip-1').addEventListener('click', () => hide($('onboarding-overlay')));
+
+$('onb-next-1').addEventListener('click', async () => {
+  if (selectedInterests.size && currentUser){
+    await sb.from('profiles').update({ interests: [...selectedInterests] }).eq('id', currentUser.id);
+  }
+  const { data: creators } = await sb.from('profiles').select('id, username, display_name').neq('id', currentUser.id).order('channel_followers_count', { ascending: false }).limit(5);
+  $('onb-creators-list').innerHTML = (creators || []).map(c => `
+    <div class="search-result">
+      <div class="post-avatar">${initials(c.display_name || c.username)}</div>
+      <div style="flex:1">${escapeHtml(c.display_name || c.username)}</div>
+      <button class="btn onb-follow-btn" data-id="${c.id}">Follow</button>
+    </div>`).join('') || `<p style="color:var(--paper-dim)">No creators yet.</p>`;
+  document.querySelectorAll('.onb-follow-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('follows').insert({ follower_id: currentUser.id, following_id: btn.dataset.id });
+      btn.textContent = 'Following'; btn.disabled = true;
+    });
+  });
+  $('onb-step-interests').classList.add('hidden');
+  $('onb-step-follow').classList.remove('hidden');
+});
+
+$('onb-next-2').addEventListener('click', async () => {
+  const { data: comms } = await sb.from('communities').select('id, name').eq('status', 'ACTIVE').order('members_count', { ascending: false }).limit(5);
+  $('onb-communities-list').innerHTML = (comms || []).map(c => `
+    <div class="search-result">
+      <div style="flex:1">${escapeHtml(c.name)}</div>
+      <button class="btn onb-join-btn" data-id="${c.id}">Join</button>
+    </div>`).join('') || `<p style="color:var(--paper-dim)">No communities yet.</p>`;
+  document.querySelectorAll('.onb-join-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('community_members').insert({ community_id: btn.dataset.id, user_id: currentUser.id });
+      btn.textContent = 'Joined'; btn.disabled = true;
+    });
+  });
+  $('onb-step-follow').classList.add('hidden');
+  $('onb-step-community').classList.remove('hidden');
+});
+
+$('onb-finish').addEventListener('click', () => { hide($('onboarding-overlay')); loadFeed(); });
 
 /* ---- boot: restore session if present ---- */
 (async () => {
