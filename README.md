@@ -424,3 +424,70 @@ the new `ai-assist` Edge Function the same way as the others.
 A real video-file upload pipeline (vs. URL-based), Brand Opportunities
 matching, and a fully separate Analytics sub-tab in Studio (it currently
 points to the existing Earn tab chart instead of duplicating it).
+
+## Phase 14 — launch-readiness essentials
+
+- **Forgot password** — a working link on the login form. Uses Supabase's
+  built-in reset-email flow; clicking the emailed link brings the person
+  back to the site and shows a "set new password" form automatically.
+- **Terms acceptance at signup** — a required checkbox linking to the
+  Legal page. Signup is blocked until it's checked — this is the piece
+  that was missing for the Terms of Service to mean anything.
+- **Favicon** — a small inline one, so the browser tab doesn't look
+  unfinished. Replace with a real logo file whenever you have one.
+
+No schema changes, no new secrets — just `index.html`.
+
+## ⭐ Consolidated deployment order (run this once, in this order)
+
+Across 14 phases this has piled up into a lot of files. Here's the actual
+order to run everything from scratch on a fresh Supabase project — skip
+any step you've already done:
+
+**SQL (Supabase → SQL Editor, run each file's contents in order):**
+1. `supabase/schema.sql`
+2. `supabase/schema_phase2.sql`
+3. `supabase/schema_phase3.sql`
+4. `supabase/schema_phase4.sql` (seeds ~1,000 demo accounts — takes a
+   minute or two)
+5. `supabase/schema_phase6.sql`
+6. `supabase/schema_phase7.sql`
+7. `supabase/schema_phase9.sql`
+8. `supabase/schema_phase10.sql`
+9. `supabase/schema_phase11.sql`
+10. `supabase/schema_phase12.sql`
+11. Bootstrap your admin account:
+    ```sql
+    update public.profiles set is_admin = true where username = 'yourusername';
+    ```
+
+**Edge Functions (Supabase → Edge Functions → Deploy via Editor, paste
+each file's code, name it exactly as shown):**
+1. `youtube-search`
+2. `create-razorpay-order`
+3. `verify-razorpay-payment`
+4. `ai-assist`
+
+**Secrets (Supabase → Edge Functions → Secrets) — only needed for the
+functions you actually want working:**
+- `YOUTUBE_API_KEY` — for YouTube tab
+- `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` — for real ad payments
+- `ANTHROPIC_API_KEY` — for the AI ✨ Improve button
+- (`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` are provided automatically —
+  never set these yourself)
+
+**Frontend config (edit near the top of `index.html`):**
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY` — required, the site won't work
+  without these
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_UPLOAD_PRESET` — only needed for
+  image posts; everything else works without it
+
+**Then:** push `index.html` to your GitHub repo, confirm GitHub Pages is
+serving it, and do one signup → post → like → comment → follow →
+message → community → poll pass to confirm the live site behaves the
+way it did in testing.
+
+Every one of `YOUTUBE_API_KEY`, `RAZORPAY_KEY_ID`/`SECRET`, and
+`ANTHROPIC_API_KEY` is optional — the site degrades gracefully (a plain
+"not available right now" message) for any one you skip. Nothing else
+depends on them.

@@ -6,6 +6,7 @@
 <meta name="description" content="Nexus — a privacy-first social platform for creators and communities. Discover, create, connect, and grow.">
 <meta name="theme-color" content="#0B1120">
 <title>Nexus — Create. Connect. Grow. Earn.</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B1120'/><circle cx='16' cy='16' r='6' fill='%23F5A623'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://bcxjztejuuaepngxdulj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -433,7 +434,23 @@
       <div class="field"><label for="li-email" data-i18n="field_email">Email</label><input id="li-email" type="email" autocomplete="email"></div>
       <div class="field"><label for="li-pass" data-i18n="field_password">Password</label><input id="li-pass" type="password" autocomplete="current-password"></div>
       <button class="btn btn-solid" id="btn-login" style="width:100%" data-i18n="btn_login">Log in</button>
+      <div class="switcher"><button id="to-forgot" style="font-size:0.85rem">Forgot password?</button></div>
       <div class="switcher"><span data-i18n="auth_new_here">New here?</span> <button id="to-signup" data-i18n="auth_create_account">Create an account</button></div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="form-forgot" class="hidden">
+      <h2 style="margin-top:0">Reset password</h2>
+      <div class="field"><label for="fp-email">Email</label><input id="fp-email" type="email" autocomplete="email"></div>
+      <button class="btn btn-solid" id="btn-send-reset" style="width:100%">Send reset link</button>
+      <div class="switcher"><button id="to-login-from-forgot">← Back to log in</button></div>
+    </div>
+
+    <!-- SET NEW PASSWORD (after clicking the email link) -->
+    <div id="form-new-password" class="hidden">
+      <h2 style="margin-top:0">Set a new password</h2>
+      <div class="field"><label for="np-pass">New password</label><input id="np-pass" type="password" minlength="6" autocomplete="new-password"></div>
+      <button class="btn btn-solid" id="btn-set-new-password" style="width:100%">Save new password</button>
     </div>
 
     <!-- SIGNUP -->
@@ -443,6 +460,10 @@
       <div class="field"><label for="su-email" data-i18n="field_email">Email</label><input id="su-email" type="email" autocomplete="email"></div>
       <div class="field"><label for="su-pass" data-i18n="field_password">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="6"></div>
       <div class="field"><label for="su-referral" data-i18n="field_referral">Referral code (optional)</label><input id="su-referral" type="text" placeholder="e.g. NEX-ABC123"></div>
+      <div class="field" style="display:flex;align-items:flex-start;gap:8px">
+        <input type="checkbox" id="su-tos" style="margin-top:4px">
+        <label for="su-tos" style="font-size:0.82rem;color:var(--paper-dim)">I agree to the <a href="#" id="su-tos-link" style="color:var(--teal)">Terms & Community Guidelines</a></label>
+      </div>
       <button class="btn btn-solid" id="btn-signup" style="width:100%" data-i18n="auth_create_account_btn">Create account</button>
       <div class="switcher"><span data-i18n="auth_have_account">Already have an account?</span> <button id="to-login" data-i18n="btn_login">Log in</button></div>
     </div>
@@ -1046,16 +1067,24 @@ function showView(name){
   const v = views();
   Object.keys(v).forEach(k => v[k].classList.toggle('hidden', k !== name));
 }
+function currentVisibleView(){
+  const v = views();
+  for (const k of Object.keys(v)){
+    if (!v[k].classList.contains('hidden')) return k;
+  }
+  return 'landing';
+}
 function openPrivacyCenter(){
-  viewBeforePrivacy = document.getElementById('view-app').classList.contains('hidden') ? 'landing' : 'app';
+  viewBeforePrivacy = currentVisibleView();
   showView('privacy');
 }
 function openLegal(){
-  viewBeforePrivacy = document.getElementById('view-app').classList.contains('hidden') ? 'landing' : 'app';
+  viewBeforePrivacy = currentVisibleView();
   showView('legal');
 }
 document.getElementById('footer-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
 document.getElementById('footer-legal-link').addEventListener('click', (e) => { e.preventDefault(); openLegal(); });
+document.getElementById('su-tos-link').addEventListener('click', (e) => { e.preventDefault(); openLegal(); });
 document.getElementById('btn-close-privacy').addEventListener('click', () => { showView(viewBeforePrivacy); });
 document.getElementById('btn-close-legal').addEventListener('click', () => { showView(viewBeforePrivacy); });
 
@@ -1117,9 +1146,42 @@ function showAuth(which){
   showView('auth');
   $('form-login').classList.toggle('hidden', which !== 'login');
   $('form-signup').classList.toggle('hidden', which !== 'signup');
+  $('form-forgot').classList.toggle('hidden', which !== 'forgot');
+  $('form-new-password').classList.toggle('hidden', which !== 'new-password');
 }
 $('to-signup').addEventListener('click', () => showAuth('signup'));
 $('to-login').addEventListener('click', () => showAuth('login'));
+$('to-forgot').addEventListener('click', () => showAuth('forgot'));
+$('to-login-from-forgot').addEventListener('click', () => showAuth('login'));
+
+/* ---- forgot / reset password ---- */
+$('btn-send-reset').addEventListener('click', async () => {
+  const email = $('fp-email').value.trim();
+  clearFlash('auth-msg-slot');
+  if (!email){ flash('auth-msg-slot', 'Enter your email first.', 'error'); return; }
+  const btn = $('btn-send-reset'); btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+  btn.disabled = false; btn.textContent = 'Send reset link';
+  flash('auth-msg-slot', error ? error.message : 'Check your email for a reset link.', error ? 'error' : 'ok');
+});
+
+$('btn-set-new-password').addEventListener('click', async () => {
+  const pass = $('np-pass').value;
+  clearFlash('auth-msg-slot');
+  if (!pass || pass.length < 6){ flash('auth-msg-slot', 'Password must be at least 6 characters.', 'error'); return; }
+  const btn = $('btn-set-new-password'); btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.auth.updateUser({ password: pass });
+  btn.disabled = false; btn.textContent = 'Save new password';
+  if (error){ flash('auth-msg-slot', error.message, 'error'); return; }
+  flash('auth-msg-slot', 'Password updated — logging you in.', 'ok');
+  history.replaceState(null, '', window.location.pathname);
+  setTimeout(() => loadProfile(), 1000);
+});
+
+// Supabase appends #access_token=...&type=recovery to the redirect URL
+if (window.location.hash.includes('type=recovery')){
+  showAuth('new-password');
+}
 
 /* ---- signup ---- */
 $('btn-signup').addEventListener('click', async () => {
@@ -1131,6 +1193,10 @@ $('btn-signup').addEventListener('click', async () => {
 
   if (!email || !password || password.length < 6){
     flash('auth-msg-slot', 'Please enter a valid email and a password of at least 6 characters.', 'error');
+    return;
+  }
+  if (!$('su-tos').checked){
+    flash('auth-msg-slot', 'Please agree to the Terms & Community Guidelines to continue.', 'error');
     return;
   }
   const btn = $('btn-signup'); btn.disabled = true; btn.textContent = 'Creating account…';
