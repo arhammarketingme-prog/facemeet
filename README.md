@@ -358,3 +358,36 @@ library needed. It's real data, computed client-side from your actual
 
 All 10 phases are now built. What's left is real business setup (your own
 Razorpay account, an admin username to promote) rather than more code.
+
+## Phase 12 — responsive layout, images, Explore, onboarding
+
+No new database changes — `index.html` only.
+
+- **Responsive across devices**: at ≥1100px width (laptop/desktop) the Home
+  feed now shows a two-column layout with a sticky right rail (Trending
+  now, Suggested creators) — desktop screen space was sitting unused
+  before. At ≥900px (tablet/iPad) content gets a bit more breathing room.
+  Below that it's still the single-column, bottom-nav mobile layout from
+  Phase 8. No layout is hidden or broken on any of these — it's the same
+  HTML, just reflowed by CSS grid at different breakpoints.
+- **Image posts (Cloudinary, unsigned upload)** — the composer has an
+  image button now; pick a photo, it uploads straight to Cloudinary from
+  the browser (no backend needed — that's what an *unsigned* upload preset
+  is for) and shows inline in the feed. **Action needed**: replace
+  `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` near the top of
+  the `<script>` in `index.html` with your own — sign up at cloudinary.com
+  (free tier is generous), then Settings → Upload → Add an **unsigned**
+  upload preset.
+- **Explore tab** — Popular Creators, New Creators, Trending Posts, Browse
+  Communities, all from real data (follower counts, signup dates, likes,
+  member counts) — the "Explore" section from the original spec that was
+  previously folded into Search only.
+- **Onboarding** — after signup, a 3-step flow: pick interests (saved to
+  your profile), follow a few suggested creators, join a community. It's
+  skippable at any point.
+
+## Still not built (unchanged from before)
+Video/link/article post types, Creator Studio's separate tabbed layout,
+gamification (badges/levels), AI writing/translation assistance, mute
+(distinct from block), appeal workflow for removed content, and an
+admin UI for editing platform settings/demo content (still SQL-editor-only).
