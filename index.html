@@ -457,6 +457,7 @@
     <button class="tabbtn" id="tab-btn-explore" data-tab="explore" role="tab" aria-selected="false">Explore</button>
     <button class="tabbtn" id="tab-btn-youtube" data-tab="youtube" role="tab" aria-selected="false" data-i18n="nav_youtube">YouTube</button>
     <button class="tabbtn" id="tab-btn-earn" data-tab="earn" role="tab" aria-selected="false" data-i18n="nav_earn">Earn</button>
+    <button class="tabbtn" id="tab-btn-studio" data-tab="studio" role="tab" aria-selected="false">Studio</button>
     <button class="tabbtn" id="tab-btn-messages" data-tab="messages" role="tab" aria-selected="false" data-i18n="nav_messages">Messages</button>
     <button class="tabbtn" id="tab-btn-notifications" data-tab="notifications" role="tab" aria-selected="false"><span data-i18n="nav_alerts">Alerts</span><span id="notif-dot" class="notif-dot hidden" aria-label="unread"></span></button>
     <button class="tabbtn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="nav_search">Search</button>
@@ -497,16 +498,26 @@
         <button class="btn" id="btn-add-poll-option" type="button">+ Add option</button>
       </div>
 
+      <div id="ai-suggestion-wrap" class="hidden" style="margin-top:8px">
+        <div class="msg msg-ok" id="ai-suggestion-text"></div>
+        <button class="btn" id="btn-use-ai-suggestion" type="button">Use this</button>
+        <button class="btn" id="btn-dismiss-ai-suggestion" type="button">Dismiss</button>
+      </div>
+
       <div id="composer-msg-slot"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
         <span>
           <label class="btn" for="composer-image-input" style="cursor:pointer" title="Add image">🖼️</label>
           <input type="file" id="composer-image-input" accept="image/*" class="hidden">
+          <button class="btn" id="btn-add-video" type="button" title="Add video URL">🎬</button>
+          <button class="btn" id="btn-add-link" type="button" title="Add link">🔗</button>
           <button class="btn" id="btn-toggle-poll" type="button">📊 Poll</button>
+          <button class="btn" id="btn-ai-improve" type="button" title="AI: improve wording">✨ Improve</button>
         </span>
         <button class="btn btn-solid" id="btn-post" data-i18n="btn_post">Post</button>
       </div>
     </div>
+    <div id="composer-attachment-note" class="hidden" style="font-size:0.8rem;color:var(--paper-dim);margin:-12px 0 12px"></div>
 
     <div id="feed-loading">
       <div class="skeleton" style="width:60%"></div>
@@ -611,6 +622,38 @@
     <div id="yt-results" class="demo-grid"></div>
   </div>
 
+  <!-- ---- CREATOR STUDIO TAB ---- -->
+  <div id="tab-studio" class="tabpanel profilewrap hidden">
+    <div class="subnav" style="padding:0 0 16px;max-width:none">
+      <button class="tabbtn active studio-pill" data-studio-pill="overview">Overview</button>
+      <button class="tabbtn studio-pill" data-studio-pill="posts">Posts</button>
+    </div>
+
+    <div id="studio-pill-overview">
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin-top:0">Overview</h3>
+        <div class="stats" id="studio-stats">
+          <div class="stat"><div class="val" id="st-followers">0</div><div class="lbl">Followers</div></div>
+          <div class="stat"><div class="val" id="st-posts">0</div><div class="lbl">Posts</div></div>
+          <div class="stat"><div class="val" id="st-views">0</div><div class="lbl">Views</div></div>
+          <div class="stat"><div class="val" id="st-engagement">0%</div><div class="lbl">Engagement</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Badges</h3>
+        <div id="studio-badges" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <p style="color:var(--paper-dim);font-size:0.78rem;margin-top:10px">For engagement trends and monetization, see the <button class="btn" id="studio-goto-earn" style="padding:2px 8px;font-size:0.78rem">Earn tab</button>.</p>
+      </div>
+    </div>
+
+    <div id="studio-pill-posts" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0">Manage Posts</h3>
+        <div id="studio-posts-list"><div class="skeleton" style="width:60%"></div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ---- EARN CENTER TAB ---- -->
   <div id="tab-earn" class="tabpanel profilewrap hidden">
     <div class="card" style="margin-bottom:16px">
@@ -683,6 +726,22 @@
     <div class="card">
       <h3 style="margin-top:0">Moderation Queue (user reports)</h3>
       <div id="admin-reports-list"><div class="skeleton" style="width:60%"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">Appeals</h3>
+      <div id="admin-appeals-list"><div class="skeleton" style="width:60%"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">Platform Settings</h3>
+      <div id="admin-settings-list"><div class="skeleton" style="width:60%"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">Banned Terms</h3>
+      <div id="admin-banned-terms-list" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="admin-new-term" placeholder="Add a term…" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--paper)">
+        <button class="btn" id="btn-add-banned-term">Add</button>
+      </div>
     </div>
   </div>
 
@@ -1004,7 +1063,7 @@ document.getElementById('btn-close-legal').addEventListener('click', () => { sho
 let currentUser = null;
 
 function showTab(tab){
-  ['home','communities','explore','youtube','earn','messages','notifications','search','profile','admin'].forEach(t => {
+  ['home','communities','explore','youtube','earn','studio','messages','notifications','search','profile','admin'].forEach(t => {
     $('tab-' + t).classList.toggle('hidden', t !== tab);
     const btn = $('tab-btn-' + t);
     btn.classList.toggle('active', t === tab);
@@ -1019,10 +1078,11 @@ function showTab(tab){
   if (tab === 'explore') loadExplore();
   if (tab === 'notifications') loadNotifications();
   if (tab === 'earn') loadEarnCenter();
+  if (tab === 'studio') loadStudioTab();
   if (tab === 'messages') openMessagesTab();
   if (tab === 'admin') loadAdminTab();
 }
-document.querySelectorAll('.tabbtn, .bottom-nav button').forEach(b => {
+document.querySelectorAll('.tabbtn:not(.studio-pill), .bottom-nav button').forEach(b => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
 });
 
@@ -1166,13 +1226,31 @@ async function loadProfileTabOnly(){
   $('p-bio').value = profile.bio || '';
   $('p-referral').value = profile.referral_code || '';
 
+  if (profile.status === 'SUSPENDED'){
+    const { data: existingAppeal } = await sb.from('appeals').select('status').eq('user_id', currentUser.id).eq('target_type', 'account').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    let notice = `<div class="msg msg-error" style="margin-bottom:16px">Your account is suspended.`;
+    if (existingAppeal){
+      notice += ` Appeal status: <strong>${escapeHtml(existingAppeal.status)}</strong>.</div>`;
+    } else {
+      notice += ` <button class="btn" id="btn-appeal-account" style="margin-left:6px">Appeal this</button></div>`;
+    }
+    $('profile-body').insertAdjacentHTML('afterbegin', notice);
+    document.getElementById('btn-appeal-account')?.addEventListener('click', async () => {
+      const message = prompt('Why should your account be reinstated?');
+      if (!message || !message.trim()) return;
+      const { error } = await sb.from('appeals').insert({ user_id: currentUser.id, target_type: 'account', message: message.trim() });
+      alert(error ? 'Could not submit appeal.' : 'Appeal submitted.');
+      loadProfileTabOnly();
+    });
+  }
+
   await loadSavedPosts();
 }
 
 async function loadSavedPosts(){
   const { data: rows, error } = await sb
     .from('saved_posts')
-    .select('post_id, posts(id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name))')
+    .select('post_id, posts(id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name))')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -1330,7 +1408,7 @@ async function openCommunity(cid, name, meta){
 
   const { data: posts, error } = await sb
     .from('posts')
-    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('community_id', cid)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false })
@@ -1408,7 +1486,7 @@ async function loadExplore(){
 
   const { data: trending } = await sb
     .from('posts')
-    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('status', 'ACTIVE').order('likes_count', { ascending: false }).limit(10);
   let likedSet = new Set();
   if (currentUser && trending && trending.length){
@@ -1456,6 +1534,7 @@ $('composer-image-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   clearFlash('composer-msg-slot');
+  pendingVideoUrl = null; pendingLinkUrl = null; hide($('composer-attachment-note'));
 
   if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUDINARY_CLOUD_NAME'){
     flash('composer-msg-slot', 'Image upload isn\'t configured yet — add your Cloudinary cloud name in index.html.', 'error');
@@ -1485,6 +1564,57 @@ $('btn-remove-image').addEventListener('click', () => {
   hide($('image-preview-wrap'));
 });
 
+/* ---- video / link attachments (URL-based, no upload pipeline needed) ---- */
+let pendingVideoUrl = null;
+let pendingLinkUrl = null;
+
+function clearAttachmentNote(){
+  pendingVideoUrl = null; pendingLinkUrl = null;
+  hide($('composer-attachment-note'));
+}
+
+$('btn-add-video').addEventListener('click', () => {
+  const url = prompt('Paste a video URL (YouTube link or a direct .mp4 link):');
+  if (!url || !url.trim()) return;
+  pendingImageUrl = null; pendingLinkUrl = null; hide($('image-preview-wrap'));
+  pendingVideoUrl = url.trim();
+  $('composer-attachment-note').textContent = '🎬 Video attached: ' + pendingVideoUrl;
+  show($('composer-attachment-note'));
+});
+
+$('btn-add-link').addEventListener('click', () => {
+  const url = prompt('Paste a link to share:');
+  if (!url || !url.trim()) return;
+  pendingImageUrl = null; pendingVideoUrl = null; hide($('image-preview-wrap'));
+  pendingLinkUrl = url.trim();
+  $('composer-attachment-note').textContent = '🔗 Link attached: ' + pendingLinkUrl;
+  show($('composer-attachment-note'));
+});
+
+/* ---- AI writing assistance (Anthropic API via Edge Function) ---- */
+$('btn-ai-improve').addEventListener('click', async () => {
+  const text = $('composer-text').value.trim();
+  if (!text){ flash('composer-msg-slot', 'Write a draft first, then ask AI to improve it.', 'error'); return; }
+  clearFlash('composer-msg-slot');
+  const btn = $('btn-ai-improve'); btn.disabled = true; btn.textContent = 'Thinking…';
+
+  const { data, error } = await sb.functions.invoke('ai-assist', { body: { action: 'improve', text } });
+
+  btn.disabled = false; btn.textContent = '✨ Improve';
+
+  if (error || !data || data.error || !data.result){
+    flash('composer-msg-slot', data?.error === 'ai_not_configured' ? 'AI assistance isn\'t set up yet on this project.' : 'AI assistance is unavailable right now.', 'error');
+    return;
+  }
+  $('ai-suggestion-text').textContent = data.result;
+  show($('ai-suggestion-wrap'));
+});
+$('btn-use-ai-suggestion').addEventListener('click', () => {
+  $('composer-text').value = $('ai-suggestion-text').textContent;
+  hide($('ai-suggestion-wrap'));
+});
+$('btn-dismiss-ai-suggestion').addEventListener('click', () => hide($('ai-suggestion-wrap')));
+
 async function loadFeed(){
   show($('feed-loading')); hide($('feed-error')); hide($('feed-empty')); $('feed-list').innerHTML = '';
   hide($('btn-load-more-feed'));
@@ -1495,8 +1625,11 @@ async function loadFeed(){
 
   feedBlockedIds = new Set();
   if (currentUser){
-    const { data: myBlocks } = await sb.from('blocks').select('blocked_id').eq('blocker_id', currentUser.id);
-    feedBlockedIds = new Set((myBlocks || []).map(b => b.blocked_id));
+    const [{ data: myBlocks }, { data: myMutes }] = await Promise.all([
+      sb.from('blocks').select('blocked_id').eq('blocker_id', currentUser.id),
+      sb.from('mutes').select('muted_id').eq('muter_id', currentUser.id)
+    ]);
+    feedBlockedIds = new Set([...(myBlocks || []).map(b => b.blocked_id), ...(myMutes || []).map(m => m.muted_id)]);
   }
 
   const { data: rawPolls } = await sb
@@ -1525,7 +1658,7 @@ async function loadFeed(){
 async function fetchAndRenderPostsPage(){
   let query = sb
     .from('posts')
-    .select('id, content, media_url, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name)')
     .eq('status', 'ACTIVE')
     .is('community_id', null);
 
@@ -1602,6 +1735,29 @@ function wirePollCard(pollId){
   });
 }
 
+function youtubeEmbedId(url){
+  const m = (url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+function renderPostMedia(p){
+  if (p.post_type === 'image' && p.media_url){
+    return `<img src="${p.media_url}" alt="" loading="lazy" style="width:100%;border-radius:10px;margin-bottom:10px;display:block">`;
+  }
+  if (p.post_type === 'video' && p.media_url){
+    const ytId = youtubeEmbedId(p.media_url);
+    if (ytId){
+      return `<iframe class="yt-embed" style="border-radius:10px;margin-bottom:10px" src="https://www.youtube.com/embed/${ytId}" title="Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+    return `<video src="${p.media_url}" controls style="width:100%;border-radius:10px;margin-bottom:10px;display:block"></video>`;
+  }
+  if (p.post_type === 'link' && p.link_url){
+    let domain = p.link_url;
+    try { domain = new URL(p.link_url).hostname; } catch(e){}
+    return `<a href="${p.link_url}" target="_blank" rel="noopener" class="yt-card" style="display:block;text-decoration:none;color:inherit;margin-bottom:10px"><div class="yt-body"><div class="yt-title">🔗 ${escapeHtml(domain)}</div><div class="yt-channel">${escapeHtml(p.link_url)}</div></div></a>`;
+  }
+  return '';
+}
+
 function renderPost(p, liked, following, saved){
   const author = p.profiles || {};
   const name = author.display_name || author.username || 'Unknown';
@@ -1617,12 +1773,12 @@ function renderPost(p, liked, following, saved){
         ${(!isSelf && currentUser) ? `<button class="btn follow-btn ${following ? 'is-following' : ''}" data-follow-target="${p.author_id}">${following ? 'Following' : 'Follow'}</button>` : ''}
       </div>
       <div class="post-content">${escapeHtml(p.content)}</div>
-      ${p.media_url ? `<img src="${p.media_url}" alt="" loading="lazy" style="width:100%;border-radius:10px;margin-bottom:10px;display:block">` : ''}
+      ${renderPostMedia(p)}
       <div class="post-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-liked="${liked}" aria-label="${liked ? 'Unlike' : 'Like'} this post">♥ <span class="like-count">${p.likes_count}</span></button>
         <button class="comment-toggle" aria-label="Show comments">💬 <span class="comment-count">${p.comments_count}</span></button>
         ${currentUser ? `<button class="save-btn ${saved ? 'liked' : ''}" data-saved="${saved}" aria-label="${saved ? 'Unsave' : 'Save'} this post">🔖 ${saved ? 'Saved' : 'Save'}</button>` : ''}
-        ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report" aria-label="Report this post">⚑ Report</button><button class="block-btn" title="Block" aria-label="Block this person">🚫 Block</button>` : ''}
+        ${(!isSelf && currentUser) ? `<button class="report-btn" title="Report" aria-label="Report this post">⚑ Report</button><button class="block-btn" title="Block" aria-label="Block this person">🚫 Block</button><button class="mute-btn" title="Mute" aria-label="Mute this person">🔕 Mute</button>` : ''}
       </div>
       <div class="comments-box hidden">
         <div class="comments-list"><div class="skeleton" style="width:60%"></div></div>
@@ -1733,6 +1889,15 @@ function wirePostCard(postId){
       if (!error){ card.remove(); }
     });
   }
+
+  const muteBtn = card.querySelector('.mute-btn');
+  if (muteBtn){
+    muteBtn.addEventListener('click', async () => {
+      const authorId = card.dataset.authorId;
+      const { error } = await sb.from('mutes').insert({ muter_id: currentUser.id, muted_id: authorId });
+      if (!error){ card.remove(); }
+    });
+  }
 }
 
 async function loadComments(postId, card){
@@ -1780,14 +1945,21 @@ $('btn-post').addEventListener('click', async () => {
     $('btn-toggle-poll').click();
   } else {
     const text = $('composer-text').value.trim();
-    if (!text && !pendingImageUrl){ flash('composer-msg-slot', 'Write something or add an image before posting.', 'error'); return; }
+    if (!text && !pendingImageUrl && !pendingVideoUrl && !pendingLinkUrl){ flash('composer-msg-slot', 'Write something or attach an image, video, or link before posting.', 'error'); return; }
     btn.disabled = true; btn.textContent = 'Posting…';
+
+    let insertPostType = 'text';
+    if (pendingImageUrl) insertPostType = 'image';
+    else if (pendingVideoUrl) insertPostType = 'video';
+    else if (pendingLinkUrl) insertPostType = 'link';
+
     const { error } = await sb.from('posts').insert({
       author_id: currentUser.id,
-      content: text || '📷',
+      content: text || (pendingImageUrl ? '📷' : pendingVideoUrl ? '🎬' : pendingLinkUrl ? '🔗' : ''),
       community_id: communityId,
-      media_url: pendingImageUrl,
-      post_type: pendingImageUrl ? 'image' : 'text'
+      media_url: pendingImageUrl || pendingVideoUrl || null,
+      link_url: pendingLinkUrl || null,
+      post_type: insertPostType
     });
     btn.disabled = false; btn.textContent = 'Post';
     if (error){ flash('composer-msg-slot', 'Could not post — ' + error.message, 'error'); return; }
@@ -1795,6 +1967,7 @@ $('btn-post').addEventListener('click', async () => {
     pendingImageUrl = null;
     $('composer-image-input').value = '';
     hide($('image-preview-wrap'));
+    clearAttachmentNote();
   }
 
   if (communityId){ await openCommunity(communityId, $('composer-community').selectedOptions[0].textContent, ''); showTab('communities'); $('community-detail').scrollIntoView(); }
@@ -2376,6 +2549,83 @@ $('btn-send-message').addEventListener('click', async () => {
 
 document.getElementById('msg-privacy-link').addEventListener('click', (e) => { e.preventDefault(); openPrivacyCenter(); });
 
+/* ============ CREATOR STUDIO + GAMIFICATION ============ */
+document.querySelectorAll('.studio-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.studio-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    ['overview','posts'].forEach(name => {
+      $('studio-pill-' + name).classList.toggle('hidden', name !== pill.dataset.studioPill);
+    });
+    if (pill.dataset.studioPill === 'posts') loadStudioPosts();
+  });
+});
+$('studio-goto-earn').addEventListener('click', () => showTab('earn'));
+
+const BADGE_RULES = [
+  { id: 'first_post', label: '📝 First Post', check: (p) => p.channel_posts_count >= 1 },
+  { id: 'rising_creator', label: '🌱 Rising Creator', check: (p) => p.channel_followers_count >= 10 },
+  { id: 'top_creator', label: '🏆 Top Creator', check: (p) => p.channel_followers_count >= 50 },
+  { id: 'prolific', label: '✍️ Prolific Poster', check: (p) => p.channel_posts_count >= 20 },
+  { id: 'community_builder', label: '👥 Community Builder', check: (p) => (p.communitiesCreated || 0) >= 1 }
+];
+
+async function loadStudioTab(){
+  if (!currentUser) return;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!profile) return;
+
+  $('st-followers').textContent = profile.channel_followers_count;
+  $('st-posts').textContent = profile.channel_posts_count;
+  $('st-views').textContent = profile.channel_views_count;
+  const engagementPct = profile.channel_views_count > 0
+    ? Math.min(100, Math.round((profile.channel_followers_count / Math.max(profile.channel_views_count,1)) * 100))
+    : 0;
+  $('st-engagement').textContent = engagementPct + '%';
+
+  const { count: communitiesCreated } = await sb.from('communities').select('id', { count: 'exact', head: true }).eq('creator_id', currentUser.id);
+  profile.communitiesCreated = communitiesCreated || 0;
+
+  const earned = BADGE_RULES.filter(b => b.check(profile));
+  $('studio-badges').innerHTML = earned.length
+    ? earned.map(b => `<span class="btn btn-solid" style="cursor:default">${b.label}</span>`).join('')
+    : `<p style="color:var(--paper-dim);font-size:0.85rem">Keep posting and growing — badges show up here automatically.</p>`;
+}
+
+async function loadStudioPosts(){
+  const { data: posts, error } = await sb.from('posts').select('id, content, status, created_at, likes_count, comments_count').eq('author_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+  if (error || !posts || posts.length === 0){
+    $('studio-posts-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No posts yet.</p>`;
+    return;
+  }
+  $('studio-posts-list').innerHTML = posts.map(p => `
+    <div class="campaign-row" data-post-id="${p.id}">
+      <span style="color:var(--paper-dim)">${escapeHtml(p.status)} · ${timeAgo(p.created_at)} · ♥${p.likes_count} · 💬${p.comments_count}</span><br>
+      ${escapeHtml((p.content || '').slice(0,120))}<br>
+      <button class="btn studio-delete-post-btn" style="margin-top:6px">Delete</button>
+      ${p.status === 'REMOVED' ? '<button class="btn studio-appeal-btn" style="margin-top:6px">Appeal removal</button>' : ''}
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.studio-delete-post-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-post-id]');
+      if (!confirm('Delete this post permanently?')) return;
+      await sb.from('posts').delete().eq('id', row.dataset.postId);
+      loadStudioPosts();
+    });
+  });
+  document.querySelectorAll('.studio-appeal-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-post-id]');
+      const message = prompt('Explain why this post should be restored:');
+      if (!message || !message.trim()) return;
+      const { error } = await sb.from('appeals').insert({ user_id: currentUser.id, target_type: 'post', target_id: row.dataset.postId, message: message.trim() });
+      alert(error ? 'Could not submit appeal.' : 'Appeal submitted — an admin will review it.');
+    });
+  });
+}
+
 /* ============ ADMIN DASHBOARD ============ */
 async function loadAutoFlaggedQueue(){
   const [{ data: flaggedPosts }, { data: flaggedComments }] = await Promise.all([
@@ -2443,9 +2693,7 @@ async function loadAdminTab(){
 
   if (error || !reports || reports.length === 0){
     $('admin-reports-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No reports.</p>`;
-    return;
-  }
-
+  } else {
   $('admin-reports-list').innerHTML = reports.map(r => `
     <div class="campaign-row" data-report-id="${r.id}" data-target-type="${r.target_type}" data-target-id="${r.target_id}">
       <strong>${escapeHtml(r.target_type)}</strong> reported by @${escapeHtml(r.profiles?.username || 'unknown')} — <em>${escapeHtml(r.reason)}</em><br>
@@ -2481,7 +2729,106 @@ async function loadAdminTab(){
       loadAdminTab();
     });
   });
+  }
+
+  await loadAdminAppeals();
+  await loadAdminSettings();
+  await loadAdminBannedTerms();
 }
+
+async function loadAdminAppeals(){
+  const { data: appeals, error } = await sb.from('appeals').select('id, target_type, target_id, message, status, created_at, profiles!appeals_user_id_fkey(username)').order('created_at', { ascending: false }).limit(50);
+  if (error || !appeals || appeals.length === 0){
+    $('admin-appeals-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No appeals.</p>`;
+    return;
+  }
+  $('admin-appeals-list').innerHTML = appeals.map(a => `
+    <div class="campaign-row" data-appeal-id="${a.id}" data-target-type="${a.target_type}" data-target-id="${a.target_id || ''}" data-user-id="${a.profiles?.username || ''}">
+      <strong>${escapeHtml(a.target_type)}</strong> by @${escapeHtml(a.profiles?.username || 'unknown')} · status: ${escapeHtml(a.status)}<br>
+      <span style="color:var(--paper-dim)">${escapeHtml(a.message)}</span><br>
+      ${a.status === 'pending' ? `
+        <button class="btn admin-appeal-approve-btn" style="margin-top:6px">Approve (restore)</button>
+        <button class="btn admin-appeal-deny-btn" style="margin-top:6px">Deny</button>
+      ` : ''}
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.admin-appeal-approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-appeal-id]');
+      const { targetType, targetId, appealId } = row.dataset;
+      if (targetType === 'account'){
+        // restore the appealing user's account — look up their id via reports join isn't direct; refetch
+        const { data: appealRow } = await sb.from('appeals').select('user_id').eq('id', appealId).single();
+        if (appealRow) await sb.from('profiles').update({ status: 'ACTIVE' }).eq('id', appealRow.user_id);
+      } else {
+        const tableMap = { post: 'posts', comment: 'comments', community: 'communities' };
+        if (tableMap[targetType]) await sb.from(tableMap[targetType]).update({ status: 'ACTIVE' }).eq('id', targetId);
+      }
+      await sb.from('appeals').update({ status: 'approved' }).eq('id', appealId);
+      loadAdminAppeals();
+    });
+  });
+  document.querySelectorAll('.admin-appeal-deny-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-appeal-id]');
+      await sb.from('appeals').update({ status: 'denied' }).eq('id', row.dataset.appealId);
+      loadAdminAppeals();
+    });
+  });
+}
+
+async function loadAdminSettings(){
+  const { data: settings, error } = await sb.from('platform_settings').select('*').order('key');
+  if (error || !settings){
+    $('admin-settings-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">Couldn't load settings.</p>`;
+    return;
+  }
+  $('admin-settings-list').innerHTML = settings.map(s => `
+    <div class="field" style="margin-bottom:10px">
+      <label>${escapeHtml(s.key)}</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="admin-setting-input" data-key="${escapeHtml(s.key)}" value="${escapeHtml(s.value)}">
+        <button class="btn admin-setting-save-btn" data-key="${escapeHtml(s.key)}">Save</button>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.admin-setting-save-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const input = document.querySelector(`.admin-setting-input[data-key="${btn.dataset.key}"]`);
+      const { error } = await sb.from('platform_settings').update({ value: input.value }).eq('key', btn.dataset.key);
+      btn.textContent = error ? 'Failed' : 'Saved';
+      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+      platformSettingsCache = null; // invalidate Earn Center's cache
+    });
+  });
+}
+
+async function loadAdminBannedTerms(){
+  const { data: terms, error } = await sb.from('banned_terms').select('term').order('term');
+  if (error || !terms){
+    $('admin-banned-terms-list').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">Couldn't load list.</p>`;
+    return;
+  }
+  $('admin-banned-terms-list').innerHTML = terms.map(t => `
+    <span class="btn" style="margin:2px" data-term="${escapeHtml(t.term)}">${escapeHtml(t.term)} <span class="admin-remove-term-btn" style="cursor:pointer;color:#fca5a5">✕</span></span>
+  `).join('') || `<p style="color:var(--paper-dim);font-size:0.85rem">No terms yet.</p>`;
+
+  document.querySelectorAll('.admin-remove-term-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const term = btn.closest('[data-term]').dataset.term;
+      await sb.from('banned_terms').delete().eq('term', term);
+      loadAdminBannedTerms();
+    });
+  });
+}
+$('btn-add-banned-term').addEventListener('click', async () => {
+  const term = $('admin-new-term').value.trim();
+  if (!term) return;
+  await sb.from('banned_terms').insert({ term });
+  $('admin-new-term').value = '';
+  loadAdminBannedTerms();
+});
 
 /* ============ YOUTUBE DISCOVERY ============ */
 async function runYoutubeSearch(){

@@ -386,8 +386,41 @@ No new database changes — `index.html` only.
   your profile), follow a few suggested creators, join a community. It's
   skippable at any point.
 
-## Still not built (unchanged from before)
-Video/link/article post types, Creator Studio's separate tabbed layout,
-gamification (badges/levels), AI writing/translation assistance, mute
-(distinct from block), appeal workflow for removed content, and an
-admin UI for editing platform settings/demo content (still SQL-editor-only).
+## Phase 13 — the last seven items
+
+Run `supabase/schema_phase12.sql` after phases 1–4, 6, 7, 10, 11. Deploy
+the new `ai-assist` Edge Function the same way as the others.
+
+1. **Video & link posts** — composer now has 🎬 (paste a video URL — YouTube
+   links embed properly, direct `.mp4` links play in a native player) and
+   🔗 (paste any link — renders as a card). No upload pipeline for video
+   files themselves; that's a bigger addition (large file handling, storage
+   costs) — URL-based covers the common case fast.
+2. **Creator Studio tabs** — new **Studio** tab: Overview (stats + badges)
+   and Posts (manage/delete your posts, appeal a removed one). Analytics
+   and Monetization stay in the Earn tab rather than being duplicated.
+3. **Gamification** — five starter badges (First Post, Rising Creator, Top
+   Creator, Prolific Poster, Community Builder) computed live from your
+   real stats, shown in Studio → Overview. Add more rules in `BADGE_RULES`
+   in `index.html` whenever you want.
+4. **AI features** — a ✨ **Improve** button in the composer rewrites your
+   draft via Claude (through the new `ai-assist` Edge Function). **Needs
+   your own Anthropic API key** from console.anthropic.com — separate from
+   any Claude.ai subscription, this is a paid API account. Set the
+   `ANTHROPIC_API_KEY` secret the same way as the other functions.
+5. **Mute** — a 🔕 button next to Report/Block on every post. Unlike Block,
+   muting is silent and one-directional: they're hidden from your feed but
+   can still message/follow you normally, and they're never told.
+6. **Appeal workflow** — a removed post shows "Appeal removal" in Studio →
+   Posts; a suspended account shows an appeal button right on the Profile
+   tab. Admin tab has a new **Appeals** queue to approve (restores the
+   content/account) or deny.
+7. **Admin settings UI** — the Admin tab can now edit `platform_settings`
+   (referral rate, eligibility thresholds, etc.) and add/remove
+   `banned_terms` directly — no more SQL editor required for day-to-day
+   moderation tuning.
+
+## What's still genuinely not built
+A real video-file upload pipeline (vs. URL-based), Brand Opportunities
+matching, and a fully separate Analytics sub-tab in Studio (it currently
+points to the existing Earn tab chart instead of duplicating it).
