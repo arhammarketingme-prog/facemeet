@@ -491,3 +491,55 @@ Every one of `YOUTUBE_API_KEY`, `RAZORPAY_KEY_ID`/`SECRET`, and
 `ANTHROPIC_API_KEY` is optional — the site degrades gracefully (a plain
 "not available right now" message) for any one you skip. Nothing else
 depends on them.
+
+## Phase 15 — from the NEXA audit, fastest-value items first
+
+Run `supabase/schema_phase13.sql` after the others (adds one column).
+Only `index.html` changed besides that.
+
+Priority was: fix the one real security gap first, then the items from
+the audit buildable in minutes rather than days.
+
+1. **XSS hardening on user-supplied URLs** (security, done first) — image/
+   video/link posts, and the sponsored ad card, now validate every URL is
+   http(s) before rendering it and escape it properly for the attribute
+   it's placed in. Previously a crafted URL in a video or link post could
+   have broken out of the `src`/`href` attribute; that gap is closed. Also
+   applied at the point of entry — pasting a non-http(s) URL into the
+   video/link composer buttons is now rejected immediately.
+2. **"Why am I seeing this?"** on the Home feed — a button next to
+   Latest/Trending that explains the ranking honestly: chronological for
+   Latest, like-count for Trending. **No false claims of personalization**
+   — the feed doesn't actually personalize yet, so the explanation says
+   that plainly rather than inventing signals that aren't real.
+3. **Social Value Score** — an illustrative 0–100 score in Studio →
+   Overview, computed from real followers/posts/engagement. Explicitly
+   labeled as not an earnings figure, per the audit's own requirement
+   ("never presented as a guaranteed earning amount").
+4. **Social Passport (external links)** — Studio → Overview now has
+   YouTube/Instagram/X/Other link fields, validated and saved to your
+   profile. **Honest scope**: these are plain links you type in, not
+   OAuth-verified connections — there's no "✓ YouTube" badge because that
+   would require registering a real OAuth app per platform (a Meta/Google
+   developer app + review process, similar to the Razorpay/YouTube setup
+   you've already done). Displaying them on a *public* profile-viewing
+   page is also not wired up yet, since Nexus doesn't have a separate
+   "view someone else's profile" page — only your own Profile/Studio.
+
+## Deliberately not started this round (bigger, lower ratio of value to time)
+- **Group chat** — the current E2EE design is 1-to-1 (one AES key wrapped
+  for exactly two people). Group chat needs the AES key wrapped for every
+  member and rewrapped whenever membership changes — a real redesign, not
+  an extension.
+- **Business Mode** — a whole parallel profile type (business listings,
+  offers, local campaigns) — a multi-phase feature on its own.
+- **Full multi-language architecture** (Gujarati/Bengali/Tamil/etc.) —
+  the current EN/MR/HI setup would need to become a proper translation-key
+  system before adding more languages cheaply; right now each language is
+  a hand-written object.
+- **Splitting `index.html` into modules** — the file has grown large
+  across 15 phases. It still works fine as one file for a GitHub
+  Pages-style static site, but a real modular rewrite (separate JS files,
+  a build step) is worth doing before the codebase grows much further —
+  it's an architecture change, not a feature, so it wasn't the fastest
+  win for a launch-focused pass.

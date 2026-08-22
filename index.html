@@ -551,10 +551,12 @@
     <div id="feed-empty" class="hidden">
       <p class="msg msg-ok">No posts yet — be the first to share something.</p>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
       <button class="btn feed-sort-btn active" data-sort="latest">Latest</button>
       <button class="btn feed-sort-btn" data-sort="trending">Trending</button>
+      <button class="btn" id="btn-why-feed" style="margin-left:auto;font-size:0.78rem">Why am I seeing this?</button>
     </div>
+    <div id="feed-why-note" class="hidden msg msg-ok" style="margin-bottom:10px"></div>
     <div id="sponsored-slot"></div>
     <div id="feed-list"></div>
     <div style="text-align:center;margin-top:10px">
@@ -659,6 +661,23 @@
           <div class="stat"><div class="val" id="st-views">0</div><div class="lbl">Views</div></div>
           <div class="stat"><div class="val" id="st-engagement">0%</div><div class="lbl">Engagement</div></div>
         </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin-top:0">Social Value Score</h3>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="val" id="st-social-value" style="font-size:2rem">0</div>
+          <p style="color:var(--paper-dim);font-size:0.8rem;margin:0">An illustrative 0–100 score based on your followers, posts, and engagement. <strong>This is not an earnings figure or a guarantee</strong> — see the Earn tab for actual eligibility and payouts.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin-top:0">Connected elsewhere</h3>
+        <p style="color:var(--paper-dim);font-size:0.8rem">Links you add here are shown on your profile — they're plain links, not verified account connections.</p>
+        <div class="field"><label for="sp-youtube">YouTube</label><input id="sp-youtube" type="text" placeholder="https://youtube.com/@yourhandle"></div>
+        <div class="field"><label for="sp-instagram">Instagram</label><input id="sp-instagram" type="text" placeholder="https://instagram.com/yourhandle"></div>
+        <div class="field"><label for="sp-x">X / Twitter</label><input id="sp-x" type="text" placeholder="https://x.com/yourhandle"></div>
+        <div class="field"><label for="sp-other">Other</label><input id="sp-other" type="text" placeholder="https://…"></div>
+        <div id="social-links-msg-slot"></div>
+        <button class="btn btn-solid" id="btn-save-social-links">Save links</button>
       </div>
       <div class="card">
         <h3 style="margin-top:0">Badges</h3>
@@ -1126,6 +1145,22 @@ function timeAgo(iso){
 function escapeHtml(str){
   const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
 }
+/* ---- URL safety: for any user-supplied URL rendered into an
+   href/src attribute. Rejects anything but http(s), and escapes
+   quotes so a crafted URL can't break out of the attribute and
+   inject markup/script (the original renderPostMedia/link-card
+   code inserted URLs into src="${...}" unescaped for quotes —
+   this closes that gap). ---- */
+function safeUrl(url){
+  try {
+    const u = new URL(url, window.location.href);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+  } catch(e){}
+  return '';
+}
+function escapeAttr(str){
+  return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 function flash(slotId, text, kind){
   const slot = $(slotId);
@@ -1530,6 +1565,16 @@ document.querySelectorAll('.feed-sort-btn').forEach(btn => {
   });
 });
 
+$('btn-why-feed').addEventListener('click', () => {
+  const note = $('feed-why-note');
+  const explanations = {
+    latest: 'You\'re seeing posts in plain chronological order — newest first, from everyone on Nexus (minus anyone you\'ve blocked or muted). There\'s no personalization or hidden ranking in this view.',
+    trending: 'You\'re seeing posts ranked by like count (most-liked first). This isn\'t personalized to your interests specifically — it\'s the same trending order everyone sees.'
+  };
+  note.textContent = explanations[feedSort] || explanations.latest;
+  note.classList.toggle('hidden');
+});
+
 /* ============ EXPLORE ============ */
 async function loadExplore(){
   const { data: popular } = await sb.from('profiles').select('username, display_name, bio, channel_followers_count').order('channel_followers_count', { ascending: false }).limit(8);
@@ -1592,8 +1637,8 @@ async function loadRightRail(){
    Replace with your own cloud name + unsigned upload preset.
    Unsigned uploads are designed to be called from the browser —
    no API secret is needed or exposed here. */
-const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUDINARY_CLOUD_NAME';
-const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UNSIGNED_UPLOAD_PRESET';
+const CLOUDINARY_CLOUD_NAME = 'o8gpxpzf';
+const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
 let pendingImageUrl = null;
 
 $('composer-image-input').addEventListener('change', async (e) => {
@@ -1642,8 +1687,10 @@ function clearAttachmentNote(){
 $('btn-add-video').addEventListener('click', () => {
   const url = prompt('Paste a video URL (YouTube link or a direct .mp4 link):');
   if (!url || !url.trim()) return;
+  const clean = safeUrl(url.trim());
+  if (!clean){ alert('That doesn\'t look like a valid http(s) link.'); return; }
   pendingImageUrl = null; pendingLinkUrl = null; hide($('image-preview-wrap'));
-  pendingVideoUrl = url.trim();
+  pendingVideoUrl = clean;
   $('composer-attachment-note').textContent = '🎬 Video attached: ' + pendingVideoUrl;
   show($('composer-attachment-note'));
 });
@@ -1651,8 +1698,10 @@ $('btn-add-video').addEventListener('click', () => {
 $('btn-add-link').addEventListener('click', () => {
   const url = prompt('Paste a link to share:');
   if (!url || !url.trim()) return;
+  const clean = safeUrl(url.trim());
+  if (!clean){ alert('That doesn\'t look like a valid http(s) link.'); return; }
   pendingImageUrl = null; pendingVideoUrl = null; hide($('image-preview-wrap'));
-  pendingLinkUrl = url.trim();
+  pendingLinkUrl = clean;
   $('composer-attachment-note').textContent = '🔗 Link attached: ' + pendingLinkUrl;
   show($('composer-attachment-note'));
 });
@@ -1807,19 +1856,24 @@ function youtubeEmbedId(url){
 }
 function renderPostMedia(p){
   if (p.post_type === 'image' && p.media_url){
-    return `<img src="${p.media_url}" alt="" loading="lazy" style="width:100%;border-radius:10px;margin-bottom:10px;display:block">`;
+    const src = safeUrl(p.media_url);
+    return src ? `<img src="${escapeAttr(src)}" alt="" loading="lazy" style="width:100%;border-radius:10px;margin-bottom:10px;display:block">` : '';
   }
   if (p.post_type === 'video' && p.media_url){
     const ytId = youtubeEmbedId(p.media_url);
     if (ytId){
+      // ytId is extracted via regex to only contain [a-zA-Z0-9_-], safe to interpolate directly
       return `<iframe class="yt-embed" style="border-radius:10px;margin-bottom:10px" src="https://www.youtube.com/embed/${ytId}" title="Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     }
-    return `<video src="${p.media_url}" controls style="width:100%;border-radius:10px;margin-bottom:10px;display:block"></video>`;
+    const src = safeUrl(p.media_url);
+    return src ? `<video src="${escapeAttr(src)}" controls style="width:100%;border-radius:10px;margin-bottom:10px;display:block"></video>` : '';
   }
   if (p.post_type === 'link' && p.link_url){
-    let domain = p.link_url;
-    try { domain = new URL(p.link_url).hostname; } catch(e){}
-    return `<a href="${p.link_url}" target="_blank" rel="noopener" class="yt-card" style="display:block;text-decoration:none;color:inherit;margin-bottom:10px"><div class="yt-body"><div class="yt-title">🔗 ${escapeHtml(domain)}</div><div class="yt-channel">${escapeHtml(p.link_url)}</div></div></a>`;
+    const href = safeUrl(p.link_url);
+    if (!href) return '';
+    let domain = href;
+    try { domain = new URL(href).hostname; } catch(e){}
+    return `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" class="yt-card" style="display:block;text-decoration:none;color:inherit;margin-bottom:10px"><div class="yt-body"><div class="yt-title">🔗 ${escapeHtml(domain)}</div><div class="yt-channel">${escapeHtml(href)}</div></div></a>`;
   }
   return '';
 }
@@ -2156,7 +2210,7 @@ async function loadSponsoredCard(){
       <div class="sponsored-tag">Sponsored</div>
       <div class="post-content" style="margin-top:6px"><strong>${escapeHtml(c.headline)}</strong><br>${escapeHtml(c.body)}</div>
       <div class="post-actions">
-        <a class="btn btn-solid" style="text-decoration:none" href="${c.target_url}" target="_blank" rel="noopener" id="sponsored-link">Learn more</a>
+        <a class="btn btn-solid" style="text-decoration:none" href="${escapeAttr(safeUrl(c.target_url))}" target="_blank" rel="noopener noreferrer" id="sponsored-link">Learn more</a>
         <button id="sponsored-why" style="margin-left:auto">Why am I seeing this?</button>
         <button id="sponsored-hide">Hide</button>
         <button id="sponsored-report">Report</button>
@@ -2656,7 +2710,35 @@ async function loadStudioTab(){
   $('studio-badges').innerHTML = earned.length
     ? earned.map(b => `<span class="btn btn-solid" style="cursor:default">${b.label}</span>`).join('')
     : `<p style="color:var(--paper-dim);font-size:0.85rem">Keep posting and growing — badges show up here automatically.</p>`;
+
+  // Social Value Score — illustrative 0-100, weighted from real stats.
+  // Deliberately capped and never framed as an earnings figure.
+  const rawScore = (profile.channel_followers_count * 0.5) + (profile.channel_posts_count * 2) + (engagementPct * 0.3);
+  $('st-social-value').textContent = Math.min(100, Math.round(rawScore));
+
+  // Social Passport — external links
+  const links = profile.social_links || {};
+  $('sp-youtube').value = links.youtube || '';
+  $('sp-instagram').value = links.instagram || '';
+  $('sp-x').value = links.x || '';
+  $('sp-other').value = links.other || '';
 }
+
+$('btn-save-social-links').addEventListener('click', async () => {
+  clearFlash('social-links-msg-slot');
+  const raw = { youtube: $('sp-youtube').value.trim(), instagram: $('sp-instagram').value.trim(), x: $('sp-x').value.trim(), other: $('sp-other').value.trim() };
+  const cleaned = {};
+  for (const k in raw){
+    if (!raw[k]) continue;
+    const safe = safeUrl(raw[k]);
+    if (!safe){ flash('social-links-msg-slot', `The ${k} link doesn't look like a valid http(s) URL.`, 'error'); return; }
+    cleaned[k] = safe;
+  }
+  const btn = $('btn-save-social-links'); btn.disabled = true;
+  const { error } = await sb.from('profiles').update({ social_links: cleaned }).eq('id', currentUser.id);
+  btn.disabled = false;
+  flash('social-links-msg-slot', error ? 'Could not save.' : 'Saved.', error ? 'error' : 'ok');
+});
 
 async function loadStudioPosts(){
   const { data: posts, error } = await sb.from('posts').select('id, content, status, created_at, likes_count, comments_count').eq('author_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
