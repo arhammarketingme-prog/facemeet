@@ -3,7 +3,7 @@
 // static app shell (index.html itself). Offline, the person can open
 // the app and see the last-loaded UI; anything needing the network
 // (feed, login, messages) will still show its normal error states.
-const CACHE_NAME = 'nexus-shell-v2';
+const CACHE_NAME = 'vartex-shell-v2';
 const SHELL_FILES = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

@@ -1,4 +1,4 @@
-# Nexus — Phase 1 (Foundation)
+# Vartex — Phase 1 (Foundation)
 
 "Create. Connect. Grow. Earn." — a privacy-first social platform.
 
@@ -523,7 +523,7 @@ the audit buildable in minutes rather than days.
    would require registering a real OAuth app per platform (a Meta/Google
    developer app + review process, similar to the Razorpay/YouTube setup
    you've already done). Displaying them on a *public* profile-viewing
-   page is also not wired up yet, since Nexus doesn't have a separate
+   page is also not wired up yet, since Vartex doesn't have a separate
    "view someone else's profile" page — only your own Profile/Studio.
 
 ## Deliberately not started this round (bigger, lower ratio of value to time)
@@ -706,7 +706,7 @@ that silently revert the sensitive columns (`is_admin`, `status`, the
 follower/post/view counters, `referral_code`, `username` on profiles;
 `budget_inr` on campaigns; `members_count`/`status` on communities) to
 their existing value unless the request comes from an admin or from one
-of Nexus's own legitimate trigger functions (liking, following, joining,
+of Vartex's own legitimate trigger functions (liking, following, joining,
 a verified Razorpay payment). Those legitimate paths still work exactly
 as before — this only closes the direct-write bypass.
 
