@@ -862,8 +862,6 @@
       Messages are end-to-end encrypted in your browser before they're sent — the server only ever stores ciphertext. See the <a href="#" id="msg-privacy-link" style="color:var(--teal)">Privacy Center</a> for details.
     </p>
 
-    <div id="key-setup-notice" class="hidden msg msg-ok" style="margin-bottom:16px"></div>
-
     <div id="msg-conversation-view" class="hidden">
       <button class="btn" id="btn-back-messages">← Conversations</button>
       <h3 id="conv-partner-name" style="margin:14px 0 10px"></h3>
@@ -3195,32 +3193,12 @@ async function ensureKeypair(){
     const privateKey = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['decrypt']);
     return { privateKey };
   }
-
-  // no local key yet — check if a public key already exists on the
-  // profile (meaning this is a new device) before silently overwriting it
-  const { data: profile } = await sb.from('profiles').select('public_key').eq('id', currentUser.id).single();
-  if (profile?.public_key){
-    show($('key-setup-notice'));
-    $('key-setup-notice').innerHTML = `This device doesn't have your encryption key yet. If you have a backup, paste it below. Otherwise, generating a new key means you won't be able to read messages sent to your old key.
-      <div class="field" style="margin-top:8px"><textarea id="key-import-input" placeholder="Paste your backed-up private key JSON here…"></textarea></div>
-      <button class="btn" id="btn-import-key">Import key</button>
-      <button class="btn" id="btn-regenerate-key">Generate a new key instead</button>`;
-    document.getElementById('btn-import-key').addEventListener('click', async () => {
-      try {
-        const jwk = JSON.parse(document.getElementById('key-import-input').value.trim());
-        localStorage.setItem(PRIVKEY_STORAGE_PREFIX + currentUser.id, JSON.stringify(jwk));
-        hide($('key-setup-notice'));
-        openMessagesTab();
-      } catch(e){ alert('That doesn\'t look like a valid key backup.'); }
-    });
-    document.getElementById('btn-regenerate-key').addEventListener('click', async () => {
-      await generateAndStoreKeypair();
-      hide($('key-setup-notice'));
-      openMessagesTab();
-    });
-    return null; // wait for the user's choice
-  }
-
+  // No local key on this device — set one up automatically, the same
+  // way any ordinary messaging app does on a new device. No prompts,
+  // no technical language. (Trade-off, kept invisible on purpose:
+  // messages sent to a previous key on another device won't be
+  // readable here — this is how the linked-only-to-this-device
+  // trust model works, without exposing it to the person using it.)
   return await generateAndStoreKeypair();
 }
 
@@ -3280,10 +3258,9 @@ async function openMessagesTab(){
   hide($('msg-conversation-view'));
   hide($('group-conversation-view'));
   show($('msg-conversations-list-wrap'));
-  hide($('key-setup-notice'));
 
   const keyResult = await ensureKeypair();
-  if (!keyResult) return; // waiting on user's key import/regenerate choice
+  if (!keyResult) return;
   myKeyHandle = keyResult.privateKey;
 
   await loadConversations();
@@ -4073,10 +4050,35 @@ $('onb-next-2').addEventListener('click', async () => {
 
 $('onb-finish').addEventListener('click', () => { hide($('onboarding-overlay')); loadFeed(); });
 
-/* ---- PWA: register the offline app-shell cache ---- */
+/* ---- PWA: register the offline app-shell cache, and make sure
+   updates actually reach people instead of sitting cached ---- */
 if ('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    try {
+      // updateViaCache:'none' stops the BROWSER's own HTTP cache from
+      // hiding a changed sw.js — without this, a stale service worker
+      // script itself can keep being "the latest" for up to 24h even
+      // after a real update ships.
+      const reg = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+
+      // when a new service worker takes over (after an update), reload
+      // once automatically so the person is never stuck on old code —
+      // this is the actual fix for "my updates don't show up in the app"
+      let refreshedOnce = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshedOnce) return;
+        refreshedOnce = true;
+        window.location.reload();
+      });
+
+      // proactively check for a new version whenever the installed app
+      // is brought back to the foreground — installed PWAs can stay
+      // open for days, so waiting for the browser's own periodic check
+      // isn't enough
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    } catch(e){}
   });
 }
 

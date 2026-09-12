@@ -896,3 +896,24 @@ orange dot) with no connection to the name. Replaced with a bold single-
 color "V" — one color for the whole mark (marigold), geometric, and
 directly tied to the name (Vartex). Used consistently now in `icons/`,
 the favicon, and the small mark next to the wordmark in the header.
+
+## Phase 25 — two real fixes from user feedback
+
+Only `index.html` and `sw.js` changed. No SQL.
+
+1. **Removed the technical key-setup prompt.** You were right — no
+   consumer app asks someone to "paste your backed-up private key JSON."
+   A new device now silently generates its own messaging key, exactly
+   like opening WhatsApp fresh on a new phone. The trade-off is the same
+   as before (old messages aren't readable on a device that never had the
+   original key) — that limitation still exists, it's just never shown to
+   the person as a decision they have to make.
+2. **PWA auto-update, actually fixed.** Service worker registration now
+   uses `updateViaCache: 'none'` (stops the browser's own HTTP cache from
+   hiding a changed `sw.js` for up to 24h), listens for a new version
+   taking over and reloads the page once automatically, and re-checks for
+   updates whenever the installed app is brought back to the foreground.
+   Push a new `index.html` from now on and people using the installed app
+   should get it within moments of reopening it — no more manual
+   cache-clearing needed for ordinary content updates (that was only ever
+   necessary for the one-time icon fix).
