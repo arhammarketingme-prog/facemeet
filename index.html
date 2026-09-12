@@ -665,6 +665,8 @@
       <h2 id="cd-name" style="margin:16px 0 4px"></h2>
       <p id="cd-desc" style="color:var(--paper-dim)"></p>
       <div id="cd-rules" class="msg msg-ok hidden" style="font-size:0.85rem;margin-bottom:14px"></div>
+      <button class="btn" id="btn-toggle-members" style="margin-bottom:12px">Members</button>
+      <div id="cd-members" class="hidden card" style="margin-bottom:16px"></div>
       <div id="cd-feed"></div>
     </div>
   </div>
@@ -843,6 +845,15 @@
         <button class="btn" id="btn-add-banned-term">Add</button>
       </div>
     </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">Verified Badges</h3>
+      <p style="color:var(--paper-dim);font-size:0.82rem">Search a username and toggle their verified badge.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="admin-verify-search" placeholder="username…" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--paper)">
+        <button class="btn" id="btn-admin-verify-search">Search</button>
+      </div>
+      <div id="admin-verify-results"></div>
+    </div>
   </div>
 
   <!-- ---- MESSAGES TAB (E2E) ---- -->
@@ -934,16 +945,22 @@
       <div id="avatar-upload-msg-slot"></div>
 
       <div class="stats">
-        <div class="stat"><div class="val" id="p-followers">0</div><div class="lbl">Followers</div></div>
+        <div class="stat" id="p-followers-stat" style="cursor:pointer"><div class="val" id="p-followers">0</div><div class="lbl">Followers</div></div>
+        <div class="stat" id="p-following-stat" style="cursor:pointer"><div class="val" id="p-following">0</div><div class="lbl">Following</div></div>
         <div class="stat"><div class="val" id="p-posts">0</div><div class="lbl">Posts</div></div>
         <div class="stat"><div class="val" id="p-views">0</div><div class="lbl">Channel views</div></div>
       </div>
+      <button class="btn" id="btn-view-profile-visitors" style="margin:8px 0">Who viewed my profile</button>
 
       <div class="card">
         <h3 style="margin-top:0" data-i18n="heading_my_channel">My Channel</h3>
         <div class="field"><label for="p-channel">Channel name</label><input id="p-channel" type="text"></div>
         <div class="field"><label for="p-bio">Bio</label><textarea id="p-bio"></textarea></div>
         <div class="field"><label for="p-referral">Your referral code</label><input id="p-referral" type="text" readonly></div>
+        <div class="field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="p-email-notifications">
+          <label for="p-email-notifications" style="color:var(--paper-dim);font-size:0.85rem">Email me about follows, likes, comments and messages</label>
+        </div>
         <div id="save-msg-slot"></div>
         <button class="btn btn-solid" id="btn-save" data-i18n="btn_save_changes">Save changes</button>
       </div>
@@ -1092,7 +1109,8 @@
       </div>
       <p id="pp-bio" style="margin:12px 0"></p>
       <div class="stats">
-        <div class="stat"><div class="val" id="pp-followers">0</div><div class="lbl">Followers</div></div>
+        <div class="stat" id="pp-followers-stat" style="cursor:pointer"><div class="val" id="pp-followers">0</div><div class="lbl">Followers</div></div>
+        <div class="stat" id="pp-following-stat" style="cursor:pointer"><div class="val" id="pp-following">0</div><div class="lbl">Following</div></div>
         <div class="stat"><div class="val" id="pp-posts">0</div><div class="lbl">Posts</div></div>
         <div class="stat"><div class="val" id="pp-views">0</div><div class="lbl">Views</div></div>
       </div>
@@ -1114,6 +1132,14 @@
 </main>
 
 <!-- ============ ONBOARDING (shown once after signup) ============ -->
+<div id="people-list-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(11,17,32,0.95);z-index:200;overflow-y:auto">
+  <div class="profilewrap" style="max-width:480px">
+    <button class="btn" id="btn-close-people-list">← Back</button>
+    <h3 id="people-list-title" style="margin:16px 0">People</h3>
+    <div id="people-list-body"><div class="skeleton" style="width:60%"></div></div>
+  </div>
+</div>
+
 <div id="onboarding-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(11,17,32,0.95);z-index:200;overflow-y:auto">
   <div class="profilewrap" style="max-width:520px">
     <div class="card">
@@ -1292,13 +1318,17 @@ async function openPublicProfile(userId){
 
   hide($('pp-loading')); show($('pp-body'));
   const name = profile.display_name || profile.username;
-  $('pp-name').textContent = name;
+  $('pp-name').innerHTML = escapeHtml(name) + verifiedBadge(profile);
   $('pp-username').textContent = '@' + profile.username;
   $('pp-bio').textContent = profile.bio || '';
   $('pp-followers').textContent = profile.channel_followers_count;
   $('pp-posts').textContent = profile.channel_posts_count;
   $('pp-views').textContent = profile.channel_views_count;
   $('pp-avatar-wrap').innerHTML = avatarHtml(profile, name, 'avatar');
+  const { count: ppFollowingCount } = await sb.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', userId);
+  $('pp-following').textContent = ppFollowingCount ?? 0;
+  $('pp-followers-stat').onclick = () => openPeopleList('followers', userId);
+  $('pp-following-stat').onclick = () => openPeopleList('following', userId);
 
   if (currentUser){
     show($('pp-actions'));
@@ -1347,7 +1377,7 @@ async function openPublicProfile(userId){
     hide($('pp-business-section'));
   }
 
-  const { data: posts } = await sb.from('posts').select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url)').eq('author_id', userId).eq('status', 'ACTIVE').order('created_at', { ascending: false }).limit(20);
+  const { data: posts } = await sb.from('posts').select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)').eq('author_id', userId).eq('status', 'ACTIVE').order('created_at', { ascending: false }).limit(20);
   $('pp-posts-list').innerHTML = (posts && posts.length) ? posts.map(p => renderPost(p, false, false, false)).join('') : `<p style="color:var(--paper-dim);font-size:0.85rem">No posts yet.</p>`;
   (posts || []).forEach(p => wirePostCard(p.id));
 }
@@ -1571,14 +1601,17 @@ async function loadProfileTabOnly(){
     $('p-avatar-img').classList.add('hidden');
     $('p-initial').classList.remove('hidden');
   }
-  $('p-name').textContent = profile.display_name || profile.username;
+  $('p-name').innerHTML = escapeHtml(profile.display_name || profile.username) + verifiedBadge(profile);
   $('p-username').textContent = '@' + profile.username;
   $('p-followers').textContent = profile.channel_followers_count;
   $('p-posts').textContent = profile.channel_posts_count;
   $('p-views').textContent = profile.channel_views_count;
+  const { count: followingCount } = await sb.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', currentUser.id);
+  $('p-following').textContent = followingCount ?? 0;
   $('p-channel').value = profile.channel_name || '';
   $('p-bio').value = profile.bio || '';
   $('p-referral').value = profile.referral_code || '';
+  $('p-email-notifications').checked = profile.email_notifications !== false;
 
   $('p-is-business').checked = !!profile.is_business;
   $('business-fields').classList.toggle('hidden', !profile.is_business);
@@ -1607,10 +1640,57 @@ async function loadProfileTabOnly(){
   await loadSavedPosts();
 }
 
+/* ============ PEOPLE LISTS (followers / following / profile visitors) ============ */
+async function openPeopleList(kind, userId){
+  show($('people-list-overlay'));
+  $('people-list-title').textContent = kind === 'followers' ? 'Followers' : kind === 'following' ? 'Following' : 'Recent profile visitors';
+  $('people-list-body').innerHTML = `<div class="skeleton" style="width:60%"></div>`;
+
+  let rows = [];
+  if (kind === 'followers'){
+    const { data } = await sb.from('follows').select('profiles!follows_follower_id_fkey(id, username, display_name, avatar_url, is_verified)').eq('following_id', userId).limit(100);
+    rows = (data || []).map(r => r.profiles).filter(Boolean);
+  } else if (kind === 'following'){
+    const { data } = await sb.from('follows').select('profiles!follows_following_id_fkey(id, username, display_name, avatar_url, is_verified)').eq('follower_id', userId).limit(100);
+    rows = (data || []).map(r => r.profiles).filter(Boolean);
+  } else if (kind === 'visitors'){
+    const { data } = await sb.from('profile_views').select('viewer_id, created_at, profiles!profile_views_viewer_id_fkey(id, username, display_name, avatar_url, is_verified)').eq('viewed_id', userId).order('created_at', { ascending: false }).limit(50);
+    $('people-list-body').innerHTML = (data && data.length) ? data.map(v => v.profiles ? `
+      <div class="search-result">
+        <span class="view-profile-trigger" data-view-profile="${v.profiles.id}" style="cursor:pointer;display:contents">
+          ${avatarHtml(v.profiles, v.profiles.display_name || v.profiles.username)}
+          <div style="flex:1">${escapeHtml(v.profiles.display_name || v.profiles.username)}${verifiedBadge(v.profiles)}<div class="post-meta">${timeAgo(v.created_at)} ago</div></div>
+        </span>
+      </div>` : `
+      <div class="search-result"><div class="post-avatar">?</div><div style="flex:1">Someone (not signed in)<div class="post-meta">${timeAgo(v.created_at)} ago</div></div></div>`
+    ).join('') : `<p style="color:var(--paper-dim);font-size:0.85rem">No visitors yet.</p>`;
+    document.querySelectorAll('#people-list-body .view-profile-trigger').forEach(el => {
+      el.addEventListener('click', () => { hide($('people-list-overlay')); openPublicProfile(el.dataset.viewProfile); });
+    });
+    return;
+  }
+
+  $('people-list-body').innerHTML = rows.length ? rows.map(u => `
+    <div class="search-result">
+      <span class="view-profile-trigger" data-view-profile="${u.id}" style="cursor:pointer;display:contents">
+        ${avatarHtml(u, u.display_name || u.username)}
+        <div style="flex:1">${escapeHtml(u.display_name || u.username)}${verifiedBadge(u)}<div class="post-meta">@${escapeHtml(u.username)}</div></div>
+      </span>
+    </div>`).join('') : `<p style="color:var(--paper-dim);font-size:0.85rem">Nobody here yet.</p>`;
+
+  document.querySelectorAll('#people-list-body .view-profile-trigger').forEach(el => {
+    el.addEventListener('click', () => { hide($('people-list-overlay')); openPublicProfile(el.dataset.viewProfile); });
+  });
+}
+$('btn-close-people-list').addEventListener('click', () => hide($('people-list-overlay')));
+$('p-followers-stat').addEventListener('click', () => openPeopleList('followers', currentUser.id));
+$('p-following-stat').addEventListener('click', () => openPeopleList('following', currentUser.id));
+$('btn-view-profile-visitors').addEventListener('click', () => openPeopleList('visitors', currentUser.id));
+
 async function loadSavedPosts(){
   const { data: rows, error } = await sb
     .from('saved_posts')
-    .select('post_id, posts(id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url))')
+    .select('post_id, posts(id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified))')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -1635,7 +1715,8 @@ $('btn-save').addEventListener('click', async () => {
 
   const { error } = await sb.from('profiles').update({
     channel_name: $('p-channel').value.trim(),
-    bio: $('p-bio').value.trim()
+    bio: $('p-bio').value.trim(),
+    email_notifications: $('p-email-notifications').checked
   }).eq('id', user.id);
 
   btn.disabled = false; btn.textContent = 'Save changes';
@@ -1823,6 +1904,7 @@ async function openCommunity(cid, name, meta){
   $('cd-name').textContent = name;
   $('cd-desc').textContent = meta;
   $('cd-feed').innerHTML = `<div class="skeleton" style="width:60%"></div>`;
+  hide($('cd-members'));
 
   const { data: communityRow } = await sb.from('communities').select('rules').eq('id', cid).single();
   const rulesEl = document.getElementById('cd-rules');
@@ -1837,7 +1919,7 @@ async function openCommunity(cid, name, meta){
 
   const { data: posts, error } = await sb
     .from('posts')
-    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)')
     .eq('community_id', cid)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false })
@@ -1859,6 +1941,59 @@ async function openCommunity(cid, name, meta){
 }
 
 $('btn-back-communities').addEventListener('click', () => { currentCommunityId = null; hide($('community-detail')); });
+
+$('btn-toggle-members').addEventListener('click', async () => {
+  const box = $('cd-members');
+  box.classList.toggle('hidden');
+  if (!box.classList.contains('hidden')) await loadCommunityMembers(currentCommunityId);
+});
+
+async function loadCommunityMembers(cid){
+  const box = $('cd-members');
+  box.innerHTML = `<div class="skeleton" style="width:60%"></div>`;
+
+  const { data: members, error } = await sb
+    .from('community_members')
+    .select('user_id, role, profiles!community_members_user_id_fkey(username, display_name, avatar_url, is_verified)')
+    .eq('community_id', cid)
+    .order('role', { ascending: true });
+
+  if (error || !members || members.length === 0){
+    box.innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No members found.</p>`;
+    return;
+  }
+
+  const myRow = currentUser ? members.find(m => m.user_id === currentUser.id) : null;
+  const iAmAdmin = myRow && myRow.role === 'admin';
+
+  box.innerHTML = members.map(m => {
+    const p = m.profiles || {};
+    const name = p.display_name || p.username || 'Unknown';
+    return `
+      <div class="search-result" data-user-id="${m.user_id}" data-role="${m.role}">
+        <span class="view-profile-trigger" data-view-profile="${m.user_id}" style="cursor:pointer;display:contents">
+          ${avatarHtml(p, name)}
+          <div style="flex:1">${escapeHtml(name)}${verifiedBadge(p)}<div class="post-meta">${escapeHtml(m.role)}</div></div>
+        </span>
+        ${(iAmAdmin && m.user_id !== currentUser.id) ? `
+          ${m.role !== 'moderator' ? `<button class="btn cm-set-role-btn" data-role="moderator">Make moderator</button>` : `<button class="btn cm-set-role-btn" data-role="member">Remove moderator</button>`}
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('#cd-members .view-profile-trigger').forEach(el => {
+    el.addEventListener('click', () => openPublicProfile(el.dataset.viewProfile));
+  });
+  document.querySelectorAll('.cm-set-role-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-user-id]');
+      btn.disabled = true;
+      await sb.from('community_members').update({ role: btn.dataset.role }).eq('community_id', cid).eq('user_id', row.dataset.userId);
+      loadCommunityMembers(cid);
+    });
+  });
+}
 $('communities-retry').addEventListener('click', loadCommunities);
 
 /* ============ POLL COMPOSER ============ */
@@ -1926,7 +2061,7 @@ async function loadExplore(){
 
   const { data: trending } = await sb
     .from('posts')
-    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)')
     .eq('status', 'ACTIVE').order('likes_count', { ascending: false }).limit(10);
   let likedSet = new Set();
   if (currentUser && trending && trending.length){
@@ -1948,7 +2083,7 @@ async function loadExplore(){
 /* ============ RIGHT RAIL (desktop only) ============ */
 async function loadRightRail(){
   const { data: topPosts } = await sb
-    .from('posts').select('content, likes_count, profiles!posts_author_id_fkey(username, display_name, avatar_url)')
+    .from('posts').select('content, likes_count, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)')
     .eq('status', 'ACTIVE').order('likes_count', { ascending: false }).limit(5);
   $('rail-trending').innerHTML = (topPosts && topPosts.length)
     ? topPosts.map(p => `<div class="rail-item"><span>💬</span><span>${escapeHtml((p.content || '').slice(0,50))}${p.content && p.content.length>50 ? '…' : ''} <span style="color:var(--paper-dim)">· ♥${p.likes_count}</span></span></div>`).join('')
@@ -1970,12 +2105,39 @@ const CLOUDINARY_CLOUD_NAME = 'o8gpxpzf';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
 let pendingImageUrl = null;
 
+/* ---- client-side image compression, before it ever leaves the
+   browser — resizes to a sane max dimension and re-encodes as
+   JPEG at a reasonable quality, so uploads are smaller/faster and
+   use less Cloudinary quota. Skipped for GIFs (resizing would
+   destroy the animation). ---- */
+async function compressImage(file, maxDimension = 1600, quality = 0.82){
+  if (file.type === 'image/gif') return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    if (width > maxDimension || height > maxDimension){
+      const scale = maxDimension / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    return blob || file;
+  } catch(e){
+    return file; // if compression fails for any reason, fall back to the original file
+  }
+}
+
 async function uploadToCloudinary(file){
   if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUDINARY_CLOUD_NAME'){
     throw new Error('not_configured');
   }
+  const compressed = await compressImage(file);
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', compressed, 'upload.jpg');
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
   const data = await res.json();
@@ -1993,6 +2155,11 @@ async function uploadVideoToCloudinary(file){
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  // request Cloudinary's automatic quality/format optimization on delivery —
+  // real client-side video compression needs a heavy library (ffmpeg.wasm)
+  // that isn't worth the download cost for most posts; this at least
+  // avoids serving an unnecessarily large file to every viewer
+  formData.append('eager', 'q_auto');
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, { method: 'POST', body: formData });
   const data = await res.json();
   if (!data.secure_url) throw new Error('upload_failed');
@@ -2178,7 +2345,7 @@ async function loadFeed(){
 
   const { data: rawPolls } = feedSort === 'following' ? { data: [] } : await sb
     .from('polls')
-    .select('id, question, created_at, author_id, profiles!polls_author_id_fkey(username, display_name), poll_options(id, option_text, votes_count)')
+    .select('id, question, created_at, author_id, profiles!polls_author_id_fkey(username, display_name, is_verified), poll_options(id, option_text, votes_count)')
     .eq('status', 'ACTIVE')
     .is('community_id', null)
     .order('created_at', { ascending: false })
@@ -2203,7 +2370,7 @@ async function loadFeed(){
 async function fetchAndRenderPostsPage(){
   let query = sb
     .from('posts')
-    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url)')
+    .select('id, content, media_url, link_url, post_type, created_at, likes_count, comments_count, author_id, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)')
     .eq('status', 'ACTIVE')
     .is('community_id', null);
 
@@ -2266,7 +2433,7 @@ function renderPoll(poll, voted){
       <div class="post-head">
         <div class="post-avatar">${initials(name)}</div>
         <div>
-          <div class="post-author">${escapeHtml(name)}</div>
+          <div class="post-author">${escapeHtml(name)}${verifiedBadge(author)}</div>
           <div class="post-meta">@${escapeHtml(author.username || '')} · ${timeAgo(poll.created_at)} · 📊 Poll</div>
         </div>
       </div>
@@ -2326,6 +2493,10 @@ function renderPostMedia(p){
   return '';
 }
 
+function verifiedBadge(author){
+  return (author && author.is_verified) ? ` <span title="Verified" style="color:#4FC3F7">✔</span>` : '';
+}
+
 function avatarHtml(author, name, sizeClass){
   const src = author && author.avatar_url ? safeUrl(author.avatar_url) : '';
   return src
@@ -2343,7 +2514,7 @@ function renderPost(p, liked, following, saved){
         <span class="view-profile-trigger" data-view-profile="${p.author_id}" style="cursor:pointer;display:contents">
           ${avatarHtml(author, name)}
           <div>
-            <div class="post-author">${escapeHtml(name)}</div>
+            <div class="post-author">${escapeHtml(name)}${verifiedBadge(author)}</div>
             <div class="post-meta">@${escapeHtml(author.username || '')} · ${timeAgo(p.created_at)}</div>
           </div>
         </span>
@@ -2596,7 +2767,7 @@ async function runSearch(){
 
   const [{ data: people, error: peopleErr }, { data: posts, error: postsErr }, { data: comms }] = await Promise.all([
     sb.from('profiles').select('id, username, display_name, bio').or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(10),
-    sb.from('posts').select('id, content, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url)').eq('status', 'ACTIVE').ilike('content', `%${q}%`).order('created_at', { ascending: false }).limit(10),
+    sb.from('posts').select('id, content, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified)').eq('status', 'ACTIVE').ilike('content', `%${q}%`).order('created_at', { ascending: false }).limit(10),
     sb.from('communities').select('id, name, description, members_count').eq('status', 'ACTIVE').ilike('name', `%${q}%`).limit(10)
   ]);
 
@@ -3659,6 +3830,31 @@ $('btn-add-banned-term').addEventListener('click', async () => {
   await sb.from('banned_terms').insert({ term });
   $('admin-new-term').value = '';
   loadAdminBannedTerms();
+});
+
+$('btn-admin-verify-search').addEventListener('click', async () => {
+  const q = $('admin-verify-search').value.trim();
+  if (!q) return;
+  const { data: users, error } = await sb.from('profiles').select('id, username, display_name, is_verified').ilike('username', `%${q}%`).limit(10);
+  if (error || !users || users.length === 0){
+    $('admin-verify-results').innerHTML = `<p style="color:var(--paper-dim);font-size:0.85rem">No matching users.</p>`;
+    return;
+  }
+  $('admin-verify-results').innerHTML = users.map(u => `
+    <div class="search-result" data-uid="${u.id}">
+      <div class="post-avatar">${initials(u.display_name || u.username)}</div>
+      <div style="flex:1">${escapeHtml(u.display_name || u.username)} <span class="post-meta">@${escapeHtml(u.username)}</span></div>
+      <button class="btn admin-toggle-verify-btn">${u.is_verified ? 'Remove ✔' : 'Grant ✔'}</button>
+    </div>
+  `).join('');
+  document.querySelectorAll('.admin-toggle-verify-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('[data-uid]');
+      const { data: cur } = await sb.from('profiles').select('is_verified').eq('id', row.dataset.uid).single();
+      await sb.from('profiles').update({ is_verified: !cur.is_verified }).eq('id', row.dataset.uid);
+      $('btn-admin-verify-search').click();
+    });
+  });
 });
 
 /* ============ YOUTUBE DISCOVERY ============ */

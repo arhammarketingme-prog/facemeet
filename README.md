@@ -842,3 +842,57 @@ where you already installed it once, **remove the old install first**
 cache manifest data aggressively per-origin, so the old broken icon can
 stick around even after the files are fixed, unless you remove and
 reinstall fresh.
+
+## Phase 24 — the last of the original master-prompt gaps, plus a logo redo
+
+Run `supabase/schema_phase20.sql` after phase 19. Deploy the new
+`send-notification-email` Edge Function the same way as the others (only
+if you want email notifications — see below, it's optional). Only
+`index.html` changed otherwise, plus the redesigned `icons/` files.
+
+1. **Followers/Following lists** — the follower/following counts on your
+   Profile tab and on any public profile page are now tappable and open an
+   actual list of people, not just a number.
+2. **Community moderator UI** — a community's admin can open "Members" on
+   that community's page and promote someone to moderator (or remove that
+   role) directly — the `community_members.role` column existed since
+   Phase 3 but had no way to actually change it until now.
+3. **"Who viewed my profile"** — a real list (Profile tab → "Who viewed my
+   profile"), not just a count. Signed-out viewers show as "Someone" rather
+   than being silently uncounted or wrongly attributed.
+4. **Verified badges** — a ✔ next to a name wherever it appears (posts,
+   profiles, search). Admin tab has a simple search-and-toggle to grant or
+   remove it — there's no self-serve "apply for verification" flow, which
+   matches how this actually works on real platforms (admin-granted, not
+   automatic).
+5. **Image compression before upload** — every image (post photos, profile
+   photos) is now resized and re-encoded client-side (max 1600px, JPEG
+   ~82% quality) before it's sent to Cloudinary, so uploads are faster and
+   use less of your free-tier quota. **Honest scope on video**: real
+   client-side video compression needs a heavy library (ffmpeg.wasm,
+   several MB to download) that isn't a good trade-off for most posts, so
+   video uploads still rely on the existing 100MB cap plus Cloudinary's
+   own automatic delivery-time optimization instead.
+6. **Email notifications** — new `send-notification-email` function using
+   Resend (resend.com, generous free tier). **This one needs real setup
+   from you**, in three parts:
+   - Sign up at resend.com, verify a sending domain (or use their shared
+     test domain to start), get an API key
+   - Deploy the function, set `RESEND_API_KEY` and `RESEND_FROM` secrets
+   - **Wire the trigger** — unlike the other functions, this one doesn't
+     fire on its own. In the Supabase dashboard: Database → Webhooks →
+     Create a new webhook → table `notifications`, event `INSERT`, type
+     "Supabase Edge Function", target this function. That connection is a
+     dashboard setting, not something a `.sql` file can express, which is
+     why it's called out here explicitly.
+   - Users can opt out anytime via the checkbox on their Profile tab
+     (`email_notifications`, on by default) — the function checks this
+     before sending.
+
+## Logo — redesigned to a single-color mark
+
+The old app icon mixed two unrelated colors (a dark background plus an
+orange dot) with no connection to the name. Replaced with a bold single-
+color "V" — one color for the whole mark (marigold), geometric, and
+directly tied to the name (Vartex). Used consistently now in `icons/`,
+the favicon, and the small mark next to the wordmark in the header.
